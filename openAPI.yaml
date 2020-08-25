@@ -1,4 +1,4 @@
-openapi: 3.0.2
+openapi: 3.0.3
 info:
   title: FDK metadata quality service
   description: A backend service that will assess metadata quality of datasets, dataservices, concepts
@@ -9,8 +9,33 @@ info:
   license:
     name: License of API
     url: 'http://data.norge.no/nlod/no/2.0'
-paths: {}
+paths:
+  /metadataquality:
+    post:
+      description: Creates a metadata quality assessment
+      operationId: createMetadataQualityAssessment
+      requestBody:
+        description: a document, or reference, that contains metadata
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityAssessment'
 components:
   schemas:
-    Qulitymetrics:
-      type: object
+    Document:
+      properties:
+        documentReference:
+          type: string
+          format: uri
+    QualityAssessment:
+      properties:
+        score:
+          type: integer
