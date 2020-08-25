@@ -1,0 +1,16 @@
+openapi: 3.0.2
+info:
+  title: FDK metadata quality service
+  description: A backend service that will assess metadata quality of datasets, dataservices, concepts
+  version: '1.0'
+  contact:
+    name: Digitaliseringsdirektoratet
+    url: 'https://digdir.no'
+  license:
+    name: License of API
+    url: 'http://data.norge.no/nlod/no/2.0'
+paths: {}
+components:
+  schemas:
+    Qulitymetrics:
+      type: object
