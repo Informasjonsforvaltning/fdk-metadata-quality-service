@@ -10,7 +10,7 @@ info:
     name: License of API
     url: 'http://data.norge.no/nlod/no/2.0'
 paths:
-  /metadataquality:
+  /assessment:
     post:
       description: Creates a metadata quality assessment
       operationId: createMetadataQualityAssessment
@@ -28,6 +28,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QualityAssessment'
+  /dimensions:
+    get:
+      description: Get a list of dimensions
+      operationId: getDimensions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dimension'
+  /indicators:
+    get:
+      description: Get a list of indicators
+      operationId: getIndicators
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Indicator'
 components:
   schemas:
     Document:
@@ -37,5 +63,49 @@ components:
           format: uri
     QualityAssessment:
       properties:
-        score:
+        rating:
+          type: integer
+        ratingCategory:
+          type: string
+        dimensions:
+          type: array
+          items:
+            properties:
+              dimensionRef:
+                type: string
+              score:
+                type: integer
+              indicators:
+                type: array
+                items:
+                  properties:
+                    indicatorRef:
+                      type: string
+                    score:
+                      type: integer
+    Dimension:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        indicators:
+          type: array
+          items:
+            properties:
+              indicatorRef:
+                type: string
+    Indicator:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        metrics:
+          type: string
+        weight:
           type: integer
