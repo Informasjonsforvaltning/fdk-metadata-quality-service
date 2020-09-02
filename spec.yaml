@@ -1,0 +1,117 @@
+openapi: 3.0.3
+info:
+  title: FDK metadata quality service
+  description: A backend service that will assess metadata quality of datasets, dataservices, concepts
+  version: '1.0'
+  contact:
+    name: Digitaliseringsdirektoratet
+    url: 'https://digdir.no'
+  license:
+    name: License of API
+    url: 'http://data.norge.no/nlod/no/2.0'
+paths:
+  /validation:
+    post:
+      description: Validates RDF graph and generates a validation report
+      operationId: createValidationReport
+      requestBody:
+        description: An RDF graph
+        content:
+          text/turtle:
+            schema:
+              type: string
+        required: true
+      responses:
+        200:
+          description: OK
+          content:
+            text/turtle:
+              schema:
+                type: string
+  /assessment:
+    post:
+      description: Creates a metadata quality assessment
+      operationId: createMetadataQualityAssessment
+      parameters:
+        - in: query
+          name: entity
+          required: true
+          schema:
+            $ref: '#/components/schemas/Entity'
+          description: Entity to be assessed
+      requestBody:
+        description: An RDF graph
+        content:
+          text/turtle:
+            schema:
+              type: string
+        required: true
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assessment'
+components:
+  schemas:
+    Entity:
+      type: string
+      enum:
+        - dataset
+    RatingCategory:
+      type: string
+      enum:
+        - excellent
+        - good
+        - sufficient
+        - poor
+    DimensionType:
+      type: string
+      enum:
+        - findability
+        - accessibility
+    IndicatorType:
+      type: string
+      enum:
+        - access_url
+        - keyword
+        - subject
+    Rating:
+      properties:
+        score:
+          type: integer
+        maxScore:
+          type: integer
+        category:
+          $ref: '#/components/schemas/RatingCategory'
+    Dimension:
+      properties:
+        type:
+          $ref: '#/components/schemas/DimensionType'
+        rating:
+          $ref: '#/components/schemas/Rating'
+        indicators:
+          type: array
+          items:
+            $ref: '#/components/schemas/Indicator'
+    Indicator:
+      properties:
+        type:
+          $ref: '#/components/schemas/IndicatorType'
+        weight:
+          type: integer
+        conforms:
+          type: boolean
+    Assessment:
+      properties:
+        entityId:
+          type: string
+        entityType:
+          $ref: '#/components/schemas/Entity'
+        rating:
+          $ref: '#/components/schemas/Rating'
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dimension'
