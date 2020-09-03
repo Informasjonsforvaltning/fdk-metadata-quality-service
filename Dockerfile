@@ -16,4 +16,5 @@ RUN addgroup --gid 1001 --system app && \
 USER app:app
 WORKDIR /app
 COPY --chown=app:app --from=build /app/target/app.jar ./
+RUN sh -c 'touch /app.jar'
 CMD java -jar app.jar
