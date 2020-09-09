@@ -19,7 +19,17 @@ schema:DatasetShape
     ] ;
     sh:property [
         sh:path dct:subject ;
-        sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:or (
+            [
+                sh:nodeKind sh:BlankNode ;
+            ]
+            [
+                sh:nodeKind sh:IRI ;
+            ]
+            [
+                sh:nodeKind sh:Literal ;
+            ]
+        ) ;
         sh:minCount 1 ;
         sh:severity sh:Info ;
     ] .
