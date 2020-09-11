@@ -34,11 +34,11 @@ paths:
       operationId: createMetadataQualityAssessment
       parameters:
         - in: query
-          name: entity
+          name: entityType
           required: true
           schema:
-            $ref: '#/components/schemas/Entity'
-          description: Entity to be assessed
+            $ref: '#/components/schemas/EntityType'
+          description: Entity type of interest
       requestBody:
         description: An RDF graph
         content:
@@ -53,12 +53,68 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Assessment'
+  /assessment/catalog/rating:
+    get:
+      description: Returns metadata quality assessment rating of a given catalog
+      operationId: getCatalogAssessmentRating
+      parameters:
+        - in: query
+          name: catalogUri
+          required: true
+          schema:
+            type: string
+          description: Catalog URI of interest
+        - in: query
+          name: entityType
+          required: true
+          schema:
+            $ref: '#/components/schemas/EntityType'
+          description: Entity type of interest
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+  /assessment/entity:
+    get:
+      description: Returns metadata quality assessment of a given entity
+      operationId: getMetadataQualityAssessmentForEntity
+      parameters:
+        - in: query
+          name: entityUri
+          required: true
+          schema:
+            type: string
+          description: Entity URI of interest
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assessment'
 components:
   schemas:
-    Entity:
+    EntityType:
       type: string
       enum:
         - dataset
+    Catalog:
+      properties:
+        id:
+          type: string
+        uri:
+          type: string
+    Entity:
+      properties:
+        uri:
+          type: string
+        type:
+          $ref: '#/components/schemas/EntityType'
+        catalog:
+          $ref: '#/components/schemas/Catalog'
     RatingCategory:
       type: string
       enum:
@@ -105,9 +161,9 @@ components:
           type: boolean
     Assessment:
       properties:
-        entityId:
+        id:
           type: string
-        entityType:
+        entity:
           $ref: '#/components/schemas/Entity'
         rating:
           $ref: '#/components/schemas/Rating'
@@ -115,3 +171,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Dimension'
+        updated:
+          type: string
+          format: date-time
