@@ -15,10 +15,14 @@ public class GlobalErrorAttributes extends DefaultErrorAttributes {
     public Map<String, Object> getErrorAttributes(ServerRequest request, ErrorAttributeOptions options) {
         Map<String, Object> errorAttributes = super.getErrorAttributes(request, options);
 
-        ResponseStatusException error = (ResponseStatusException) getError(request);
+        Throwable throwable = getError(request);
 
-        errorAttributes.put("status", error.getStatus());
-        errorAttributes.put("message", error.getReason());
+        if (throwable instanceof ResponseStatusException) {
+            ResponseStatusException error = (ResponseStatusException) throwable;
+
+            errorAttributes.put("status", error.getStatus());
+            errorAttributes.put("message", error.getReason());
+        }
 
         return errorAttributes;
     }

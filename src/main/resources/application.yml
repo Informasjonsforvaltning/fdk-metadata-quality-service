@@ -1,0 +1,41 @@
+logging:
+  level.root: WARN
+  level.no: ${LOG_LEVEL:DEBUG}
+  level.org.apache.jena.riot: ERROR
+
+spring:
+  data:
+    mongodb:
+      authentication-database: admin
+      database: metadata-quality-service
+      username: ${MONGO_USERNAME}
+      password: ${MONGO_PASSWORD}
+      host: ${MONGO_HOST:mongodb}
+      port: ${MONGO_PORT:27017}
+  rabbitmq:
+    host: ${RABBIT_HOST:rabbitmq}
+    port: ${RABBIT_PORT:5672}
+    username: ${RABBIT_USERNAME}
+    password: ${RABBIT_PASSWORD}
+application:
+  dataset-harvester-base-uri: ${DATASET_HARVESTER_BASE_URI:https://datasets.fellesdatakatalog.digdir.no}
+
+---
+
+spring:
+  profiles: develop,test,unit-integration
+  data:
+    mongodb:
+      authentication-database: admin
+      database: metadata-quality-service
+      username: ${MONGO_USERNAME:admin}
+      password: ${MONGO_PASSWORD:admin}
+      host: ${MONGO_HOST:localhost}
+      port: ${MONGO_PORT:27017}
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    port: ${RABBIT_PORT:5672}
+    username: ${RABBIT_USERNAME:guest}
+    password: ${RABBIT_PASSWORD:guest}
+application:
+  dataset-harvester-base-uri: ${DATASET_HARVESTER_BASE_URI:https://datasets.staging.fellesdatakatalog.digdir.no}

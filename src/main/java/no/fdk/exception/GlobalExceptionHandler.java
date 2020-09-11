@@ -1,14 +1,12 @@
 package no.fdk.exception;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fdk.exception.GlobalErrorAttributes;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.AbstractErrorWebExceptionHandler;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.stereotype.Component;
@@ -41,14 +39,29 @@ public class GlobalExceptionHandler extends AbstractErrorWebExceptionHandler {
     private Mono<ServerResponse> renderErrorResponse(final ServerRequest request) {
         final Map<String, Object> errorPropertiesMap = getErrorAttributes(request, ErrorAttributeOptions.defaults());
 
-        ResponseStatusException error = (ResponseStatusException) getError(request);
+        Throwable throwable = getError(request);
 
-        log.error(error.getReason(), error);
+        return Mono
+            .just(throwable)
+            .filter(ResponseStatusException.class::isInstance)
+            .map(ResponseStatusException.class::cast)
+            .flatMap(e -> {
+                log.error(e.getReason(), e);
 
-        return ServerResponse
-            .status(error.getStatus())
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(BodyInserters.fromValue(errorPropertiesMap));
+                return ServerResponse
+                    .status(e.getStatus())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(BodyInserters.fromValue(errorPropertiesMap));
+            })
+            .onErrorResume(e -> {
+                    log.error(e.getMessage(), e);
+
+                    return ServerResponse
+                        .status(500)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(BodyInserters.fromValue(errorPropertiesMap));
+                }
+            );
     }
 
 }

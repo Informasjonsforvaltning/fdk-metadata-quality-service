@@ -1,33 +1,81 @@
 package no.fdk.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import no.fdk.exception.NotFoundException;
 import no.fdk.model.*;
+import no.fdk.repository.AssessmentRepository;
 import org.apache.jena.graph.Graph;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.*;
 import org.apache.jena.shacl.ValidationReport;
 import org.apache.jena.shacl.validation.ReportEntry;
+import org.apache.jena.util.URIref;
 import org.apache.jena.vocabulary.DCAT;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.RDF;
+import org.springframework.data.mongodb.core.FindAndReplaceOptions;
+import org.springframework.data.mongodb.core.ReactiveFluentMongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+
+import static java.lang.String.format;
+import static org.springframework.data.mongodb.core.aggregation.Fields.UNDERSCORE_ID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AssessmentService {
 
     private final ValidationService validationService;
+    private final AssessmentRepository assessmentRepository;
+    private final ReactiveFluentMongoOperations reactiveFluentMongoOperations;
 
-    public Collection<Assessment> assess(Graph graph, EntityType entity) {
+    public Flux<Assessment> assess(Graph graph, EntityType entityType) {
         Collection<Assessment> assessments = new ArrayList<>();
         ValidationReport report = validationService.validate(graph);
 
-        extractEntitiesFromGraph(graph, entity)
-            .forEach((id, uri) -> assessments.add(generateAssessmentForEntity(id, uri, entity, report)));
+        extractEntitiesFromGraph(graph, entityType)
+            .forEach(entity -> assessments.add(generateAssessmentForEntity(entity, report)));
 
-        return assessments;
+        return Flux.fromIterable(assessments);
+    }
+
+    public Mono<Rating> getCatalogAssessmentRating(String catalogUri, EntityType entityType) {
+        return assessmentRepository
+            .findAllByEntityCatalogUriAndEntityType(catalogUri, entityType)
+            .map(Assessment::getRating)
+            .reduce((current, previous) ->
+                Rating
+                    .builder()
+                    .score(previous.getScore() + current.getScore())
+                    .maxScore(previous.getMaxScore() + current.getMaxScore())
+                    .category(determineRatingCategory(previous.getScore() + current.getScore(), previous.getMaxScore() + current.getMaxScore()))
+                    .build())
+            .switchIfEmpty(Mono.error(new NotFoundException(format("Could not find any entries with catalog URI: %s and entity type: %s", catalogUri, entityType))));
+    }
+
+    public Mono<Assessment> getEntityAssessment(String entityUri) {
+        return assessmentRepository
+            .findById(entityUri)
+            .switchIfEmpty(Mono.error(new NotFoundException(format("Could not find any entries with entity URI: %s", entityUri))));
+    }
+
+    public Flux<Assessment> upsertAssessments(Flux<Assessment> assessments) {
+        return assessments
+            .flatMap(assessment -> reactiveFluentMongoOperations
+                .update(Assessment.class)
+                .matching(Criteria.where(UNDERSCORE_ID).is(assessment.getId()))
+                .replaceWith(assessment)
+                .withOptions(FindAndReplaceOptions.options().returnNew().upsert())
+                .findAndReplace()
+            );
     }
 
     private Collection<Dimension> buildDimensions(Collection<IndicatorType> violations) {
@@ -103,27 +151,30 @@ public class AssessmentService {
         return RatingCategory.poor;
     }
 
-    private Map<String, String> extractEntitiesFromGraph(Graph graph, EntityType entity) {
-        Map<String, String> entities = new HashMap<>();
+    private Collection<Entity> extractEntitiesFromGraph(Graph graph, EntityType entityType) {
+        Collection<Entity> entities = new ArrayList<>();
         Model model = ModelFactory.createModelForGraph(graph);
 
-        if (entity == EntityType.dataset) {
+        if (entityType == EntityType.dataset) {
             model
                 .listResourcesWithProperty(RDF.type, DCAT.Dataset)
                 .toList()
                 .forEach(r -> {
-                    if (r.hasProperty(DCTerms.identifier)) {
-                        String resourceUri = r.getURI();
-                        String identifier = r.getProperty(DCTerms.identifier).getString();
-                        entities.put(identifier, resourceUri);
-                    }
+                    Entity entity = Entity
+                        .builder()
+                        .uri(r.getURI())
+                        .type(EntityType.dataset)
+                        .catalog(extractCatalogFromModel(model, r.getURI()))
+                        .build();
+
+                    entities.add(entity);
                 });
         }
 
         return entities;
     }
 
-    private Assessment generateAssessmentForEntity(String id, String uri, EntityType entity, ValidationReport report) {
+    private Assessment generateAssessmentForEntity(Entity entity, ValidationReport report) {
         Collection<IndicatorType> violations = new HashSet<>();
 
         if (!report.conforms()) {
@@ -131,7 +182,7 @@ public class AssessmentService {
 
             reportEntries
                 .stream()
-                .filter(entry -> entry.focusNode().hasURI(uri))
+                .filter(entry -> entry.focusNode().hasURI(entity.getUri()))
                 .forEach(entry -> violations.addAll(getViolations(entry, reportEntries)));
         }
 
@@ -143,8 +194,8 @@ public class AssessmentService {
 
         return Assessment
             .builder()
-            .enityId(id)
-            .entityType(entity)
+            .id(entity.getUri())
+            .entity(entity)
             .dimensions(dimensions)
             .rating(buildRating(indicators))
             .build();
@@ -156,7 +207,17 @@ public class AssessmentService {
         if (entry.value() != null) {
             reportEntries
                 .stream()
-                .filter(e -> e.focusNode().getURI().equals(entry.value().getURI()))
+                .filter(e -> {
+                    if (e.focusNode().isURI() && entry.value().isURI()) {
+                        return e.focusNode().getURI().equals(entry.value().getURI());
+                    }
+
+                    if (e.focusNode().isBlank() && entry.value().isBlank()) {
+                        return e.focusNode().getBlankNodeId().equals(entry.value().getBlankNodeId());
+                    }
+
+                    return false;
+                })
                 .findAny()
                 .ifPresent(relatedEntry -> violations.addAll(getViolations(relatedEntry, reportEntries)));
         } else {
@@ -176,6 +237,32 @@ public class AssessmentService {
         }
 
         return violations;
+    }
+
+    private Catalog extractCatalogFromModel(Model model, String uri) {
+        Catalog.CatalogBuilder catalogBuilder = Catalog.builder();
+
+        ResIterator catalogIterator = model.listResourcesWithProperty(DCAT.dataset, ResourceFactory.createResource(URIref.encode(uri)));
+
+        if (catalogIterator.hasNext()) {
+            Resource catalogResource = catalogIterator.nextResource();
+
+            catalogBuilder
+                .id(extractPublisherIdFromCatalogResource(catalogResource))
+                .uri(catalogResource.getURI());
+        }
+
+        return catalogBuilder.build();
+    }
+
+    private String extractPublisherIdFromCatalogResource(Resource resource) {
+        Resource publisherResource = resource.hasProperty(DCTerms.publisher)
+            ? resource.getProperty(DCTerms.publisher).getResource()
+            : null;
+
+        return publisherResource != null && publisherResource.hasProperty(DCTerms.identifier)
+            ? publisherResource.getProperty(DCTerms.identifier).getString()
+            : null;
     }
 
 }

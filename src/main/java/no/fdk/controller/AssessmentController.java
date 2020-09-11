@@ -3,6 +3,7 @@ package no.fdk.controller;
 import lombok.RequiredArgsConstructor;
 import no.fdk.model.Assessment;
 import no.fdk.model.EntityType;
+import no.fdk.model.Rating;
 import no.fdk.service.AssessmentService;
 import no.fdk.utils.GraphUtils;
 import no.fdk.utils.LanguageUtils;
@@ -10,6 +11,7 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.riot.Lang;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/assessment")
@@ -21,14 +23,29 @@ public class AssessmentController {
     @PostMapping
     private Flux<Assessment> assessGraphNodes(
         @RequestHeader("content-type") String contentType,
-        @RequestParam EntityType entity,
+        @RequestParam EntityType entityType,
         @RequestBody String body
     ) {
         Lang requestBodyLang = LanguageUtils.mediaTypeToRdfLanguage(contentType);
 
-        Graph bodyGraph = GraphUtils.stringToGraph(body, requestBodyLang);
+        Graph graph = GraphUtils.stringToGraph(body, requestBodyLang);
 
-        return Flux.fromIterable(assessmentService.assess(bodyGraph, entity));
+        return assessmentService.assess(graph, entityType);
+    }
+
+    @GetMapping("/catalog/rating")
+    private Mono<Rating> getCatalogAssessmentRating(
+        @RequestParam String catalogUri,
+        @RequestParam EntityType entityType
+    ) {
+        return assessmentService.getCatalogAssessmentRating(catalogUri, entityType);
+    }
+
+    @GetMapping("/entity")
+    private Mono<Assessment> getEntityAssessment(
+        @RequestParam String entityUri
+    ) {
+        return assessmentService.getEntityAssessment(entityUri);
     }
 
 }

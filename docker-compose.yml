@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+  app:
+    build: .
+    ports:
+      - 8080:8080
+    environment:
+      - LOG_LEVEL=DEBUG
+      - MONGO_HOST=localhost
+      - MONGO_PORT=27017
+      - MONGO_USERNAME=admin
+      - MONGO_PASSWORD=admin
+      - RABBIT_HOST=localhost
+      - RABBIT_PORT=5672
+      - RABBIT_USERNAME=guest
+      - RABBIT_PASSWORD=guest
+      - DATASET_HARVESTER_BASE_URI=https://datasets.staging.fellesdatakatalog.digdir.no
+  db:
+    image: mongo
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+  rabbitmq:
+    image: rabbitmq:management
+    ports:
+      - 5672:5672
+      - 15672:15672
