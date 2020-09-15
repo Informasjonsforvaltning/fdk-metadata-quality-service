@@ -79,7 +79,7 @@ paths:
                 $ref: '#/components/schemas/Rating'
   /assessment/entity:
     get:
-      description: Returns metadata quality assessment of a given entity
+      description: Returns metadata quality assessment for a given entity
       operationId: getMetadataQualityAssessmentForEntity
       parameters:
         - in: query
@@ -95,6 +95,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Assessment'
+  /assessment/entities:
+    get:
+      description: Returns metadata quality assessment for given entities
+      operationId: getMetadataQualityAssessmentsForEntities
+      parameters:
+        - in: query
+          name: entityUris
+          required: true
+          schema:
+            type: string
+          description: Comma-separated entity URIs of interest
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Assessment'
 components:
   schemas:
     EntityType:
