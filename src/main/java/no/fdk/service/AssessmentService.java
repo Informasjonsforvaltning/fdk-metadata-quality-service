@@ -20,10 +20,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import static java.lang.String.format;
 import static org.springframework.data.mongodb.core.aggregation.Fields.UNDERSCORE_ID;
@@ -65,6 +62,10 @@ public class AssessmentService {
         return assessmentRepository
             .findById(entityUri)
             .switchIfEmpty(Mono.error(new NotFoundException(format("Could not find any entries with entity URI: %s", entityUri))));
+    }
+
+    public Flux<Assessment> getEntitiesAssessments(Set<String> entityUris) {
+        return assessmentRepository.findAllByEntityUriIn(entityUris);
     }
 
     public Flux<Assessment> upsertAssessments(Flux<Assessment> assessments) {

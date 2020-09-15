@@ -3,6 +3,7 @@ package no.fdk.listener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fdk.configuration.ApplicationProperties;
+import no.fdk.model.Assessment;
 import no.fdk.model.EntityType;
 import no.fdk.service.AssessmentService;
 import no.fdk.utils.GraphUtils;
@@ -11,6 +12,7 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static java.lang.String.format;
@@ -40,8 +42,11 @@ public class RabbitMQListener {
             .bodyToMono(String.class)
             .flatMap(body -> Mono.just(GraphUtils.stringToGraph(body, Lang.TURTLE)))
             .doOnSuccess(graph -> {
-                assessmentService.upsertAssessments(assessmentService.assess(graph, EntityType.dataset));
-                log.info("Finished creating assessments");
+                assessmentService
+                    .upsertAssessments(assessmentService.assess(graph, EntityType.dataset))
+                    .count()
+                    .doOnSuccess(count -> log.info("Finished creating {} assessments", count))
+                    .subscribe();
             })
             .doOnError(Throwable::printStackTrace)
             .subscribe();

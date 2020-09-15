@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Set;
+
 @RestController
 @RequestMapping("/assessment")
 @RequiredArgsConstructor
@@ -46,6 +48,13 @@ public class AssessmentController {
         @RequestParam String entityUri
     ) {
         return assessmentService.getEntityAssessment(entityUri);
+    }
+
+    @GetMapping("/entities")
+    private Flux<Assessment> getEntitiesAssessments(
+        @RequestParam Set<String> entityUris
+    ) {
+        return assessmentService.getEntitiesAssessments(entityUris);
     }
 
 }
