@@ -59,8 +59,14 @@ paths:
       operationId: getCatalogAssessmentRating
       parameters:
         - in: query
+          name: catalogId
+          required: false
+          schema:
+            type: string
+          description: Catalog ID of interest
+        - in: query
           name: catalogUri
-          required: true
+          required: false
           schema:
             type: string
           description: Catalog URI of interest
