@@ -21,6 +21,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 import static org.springframework.data.mongodb.core.aggregation.Fields.UNDERSCORE_ID;
@@ -165,7 +166,7 @@ public class AssessmentService {
                         .builder()
                         .uri(r.getURI())
                         .type(EntityType.dataset)
-                        .catalog(extractCatalogFromModel(model, r.getURI()))
+                        .catalog(extractCatalogFromModel(model, r))
                         .build();
 
                     entities.add(entity);
@@ -240,20 +241,27 @@ public class AssessmentService {
         return violations;
     }
 
-    private Catalog extractCatalogFromModel(Model model, String uri) {
-        Catalog.CatalogBuilder catalogBuilder = Catalog.builder();
+    private Catalog extractCatalogFromModel(Model model, Resource datasetResource) {
+        String catalogId = null, catalogUri = null;
 
-        ResIterator catalogIterator = model.listResourcesWithProperty(DCAT.dataset, ResourceFactory.createResource(URIref.encode(uri)));
+        ResIterator catalogIterator = model.listResourcesWithProperty(DCAT.dataset, ResourceFactory.createResource(URIref.encode(datasetResource.getURI())));
 
         if (catalogIterator.hasNext()) {
             Resource catalogResource = catalogIterator.nextResource();
 
-            catalogBuilder
-                .id(extractPublisherIdFromCatalogResource(catalogResource))
-                .uri(catalogResource.getURI());
+            catalogId = extractPublisherIdFromCatalogResource(catalogResource);
+            catalogUri = catalogResource.getURI();
         }
 
-        return catalogBuilder.build();
+        if (catalogId == null && datasetResource.hasProperty(DCTerms.publisher)) {
+            catalogId = extractPublisherIdFromPublisherResource(datasetResource.getPropertyResourceValue(DCTerms.publisher));
+        }
+
+        return Catalog
+            .builder()
+            .id(catalogId)
+            .uri(catalogUri)
+            .build();
     }
 
     private String extractPublisherIdFromCatalogResource(Resource resource) {
@@ -263,6 +271,16 @@ public class AssessmentService {
 
         return publisherResource != null && publisherResource.hasProperty(DCTerms.identifier)
             ? publisherResource.getProperty(DCTerms.identifier).getString()
+            : null;
+    }
+
+    private String extractPublisherIdFromPublisherResource(Resource resource) {
+        String identifier = resource != null && resource.hasProperty(DCTerms.identifier)
+            ? resource.getProperty(DCTerms.identifier).getString()
+            : null;
+
+        return identifier != null && Pattern.matches("\\d{9}", identifier)
+            ? identifier
             : null;
     }
 
