@@ -37,10 +37,11 @@ public class AssessmentController {
 
     @GetMapping("/catalog/rating")
     private Mono<Rating> getCatalogAssessmentRating(
+        @RequestParam String catalogId,
         @RequestParam String catalogUri,
         @RequestParam EntityType entityType
     ) {
-        return assessmentService.getCatalogAssessmentRating(catalogUri, entityType);
+        return assessmentService.getCatalogAssessmentRating(catalogId, catalogUri, entityType);
     }
 
     @GetMapping("/entity")

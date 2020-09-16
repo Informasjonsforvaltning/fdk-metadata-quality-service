@@ -2,6 +2,7 @@ package no.fdk.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import no.fdk.exception.BadRequestException;
 import no.fdk.exception.NotFoundException;
 import no.fdk.model.*;
 import no.fdk.repository.AssessmentRepository;
@@ -44,9 +45,14 @@ public class AssessmentService {
         return Flux.fromIterable(assessments);
     }
 
-    public Mono<Rating> getCatalogAssessmentRating(String catalogUri, EntityType entityType) {
-        return assessmentRepository
-            .findAllByEntityCatalogUriAndEntityType(catalogUri, entityType)
+    public Mono<Rating> getCatalogAssessmentRating(String catalogId, String catalogUri, EntityType entityType) {
+        if (catalogId == null && catalogUri == null) {
+            throw new BadRequestException("One of [catalogId, catalogUri] must be provided");
+        }
+
+        return (catalogId != null
+            ? assessmentRepository.findAllByEntityCatalogIdAndEntityType(catalogId, entityType)
+            : assessmentRepository.findAllByEntityCatalogUriAndEntityType(catalogUri, entityType))
             .map(Assessment::getRating)
             .reduce((current, previous) ->
                 Rating

@@ -9,6 +9,8 @@ import java.util.Set;
 
 public interface AssessmentRepository extends ReactiveMongoRepository<Assessment, String> {
 
+    Flux<Assessment> findAllByEntityCatalogIdAndEntityType(String catalogId, EntityType entityType);
+
     Flux<Assessment> findAllByEntityCatalogUriAndEntityType(String catalogUri, EntityType entityType);
 
     Flux<Assessment> findAllByEntityUriIn(Set<String> entityUris);
