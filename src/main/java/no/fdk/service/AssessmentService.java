@@ -60,6 +60,8 @@ public class AssessmentService {
                     .builder()
                     .score(previous.getScore() + current.getScore())
                     .maxScore(previous.getMaxScore() + current.getMaxScore())
+                    .satisfiedCriteria(previous.getSatisfiedCriteria() + current.getSatisfiedCriteria())
+                    .totalCriteria(previous.getTotalCriteria() + current.getTotalCriteria())
                     .category(determineRatingCategory(previous.getScore() + current.getScore(), previous.getMaxScore() + current.getMaxScore()))
                     .build())
             .switchIfEmpty(Mono.error(new NotFoundException(format("Could not find any entries with catalog URI: %s and entity type: %s", catalogUri, entityType))));
@@ -136,11 +138,17 @@ public class AssessmentService {
             .stream()
             .mapToInt(Indicator::getWeight)
             .sum();
+        long satisfiedCriteria = indicators
+            .stream()
+            .filter(Indicator::getConforms)
+            .count();
 
         return Rating
             .builder()
             .score(score)
             .maxScore(maxScore)
+            .satisfiedCriteria(Math.toIntExact(satisfiedCriteria))
+            .totalCriteria(indicators.size())
             .category(determineRatingCategory(score, maxScore))
             .build();
     }
