@@ -8,5 +8,7 @@ import lombok.Data;
 public class Rating {
     private Integer score;
     private Integer maxScore;
+    private Integer satisfiedCriteria;
+    private Integer totalCriteria;
     private RatingCategory category;
 }
