@@ -62,7 +62,7 @@ public class AssessmentService {
                     .maxScore(previous.getMaxScore() + current.getMaxScore())
                     .category(determineRatingCategory(previous.getScore() + current.getScore(), previous.getMaxScore() + current.getMaxScore()))
                     .build())
-            .switchIfEmpty(Mono.error(new NotFoundException(format("Could not find any entries with catalog URI: %s and entity type: %s", catalogUri, entityType))));
+            .switchIfEmpty(Mono.error(new NotFoundException(format("Could not find any entries with catalog ID: %s or catalog URI: %s and entity type: %s", catalogId, catalogUri, entityType))));
     }
 
     public Mono<Assessment> getEntityAssessment(String entityUri) {
