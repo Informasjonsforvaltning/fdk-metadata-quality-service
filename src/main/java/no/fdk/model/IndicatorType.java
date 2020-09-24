@@ -4,5 +4,6 @@ public enum IndicatorType {
     access_url,
     keywordUsage,
     subjectUsage,
-    geoSearch
+    geoSearch,
+    controlledVocabularyUsage
 }

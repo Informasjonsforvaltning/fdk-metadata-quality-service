@@ -117,6 +117,14 @@ public class AssessmentService {
                 .conforms(!violations.contains(IndicatorType.geoSearch))
                 .build()
         );
+        List<Indicator> interoperabilityIndicators = List.of(
+            Indicator
+                .builder()
+                .type(IndicatorType.controlledVocabularyUsage)
+                .weight(100)
+                .conforms(!violations.contains(IndicatorType.controlledVocabularyUsage))
+                .build()
+        );
 
         return List.of(
             Dimension
@@ -130,6 +138,12 @@ public class AssessmentService {
                 .type(DimensionType.findability)
                 .indicators(findabilityIndicators)
                 .rating(buildRating(findabilityIndicators))
+                .build(),
+            Dimension
+                .builder()
+                .type(DimensionType.interoperability)
+                .indicators(interoperabilityIndicators)
+                .rating(buildRating(interoperabilityIndicators))
                 .build()
         );
     }
@@ -259,6 +273,10 @@ public class AssessmentService {
 
             if (path.equals(DCTerms.spatial.getURI())) {
                 violations.add(IndicatorType.geoSearch);
+            }
+
+            if (path.equals(DCTerms.format.getURI())) {
+                violations.add(IndicatorType.controlledVocabularyUsage);
             }
         }
 

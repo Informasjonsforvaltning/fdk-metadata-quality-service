@@ -2,6 +2,7 @@
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix schema: <http://schema.org/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 schema:DatasetShape
     a sh:NodeShape ;
@@ -52,6 +53,53 @@ schema:DistributionShape
     sh:property [
         sh:path dcat:accessService ;
         sh:node schema:DataServiceShape ;
+        sh:severity sh:Info ;
+    ] ;
+    sh:property [
+        sh:path dct:format ;
+        sh:minCount 1 ;
+        sh:qualifiedValueShape [
+            sh:nodeKind sh:Literal ;
+            sh:datatype xsd:string ;
+            sh:in (
+                "text/csv"
+                "application/gml+xml"
+                "text/html"
+                "application/json"
+                "application/javascript"
+                "application/vnd.geo+json"
+                "application/vnd.google-earth.kml+xml"
+                "application/vnd.oasis.opendocument.spreadsheet"
+                "application/rdf+xml"
+                "text/xml"
+                "application/x-­ogc-sosi"
+                "image/tiff"
+                "text/tab-separated-values"
+                "text/plain"
+                "application/x.wfs"
+                "application/x.wms"
+                "application/vnd.sealed-xls"
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                "application/xml"
+                "application/x.yaml"
+                "application/octet-stream"
+                "application/ld+json"
+                "text/turtle"
+                "application/n-triples"
+                "application/gpx+xml"
+                "application/x.siri"
+                "application/x.gtfs"
+                "application/x.gtfsrt"
+                "application/x.netex"
+                "application/x.ualf"
+                "application/zip"
+                "application/pdf"
+                "application/sql"
+                "application/geopackage+sqlite3"
+                "application/vnd.sqlite3"
+            ) ;
+        ] ;
+        sh:qualifiedMinCount 1 ;
         sh:severity sh:Info ;
     ] .
 
