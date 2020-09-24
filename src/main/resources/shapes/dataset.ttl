@@ -32,7 +32,13 @@ schema:DatasetShape
         ) ;
         sh:minCount 1 ;
         sh:severity sh:Info ;
-    ] .
+    ] ;
+    sh:property [
+        sh:path dct:spatial ;
+        sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:minCount 1 ;
+        sh:severity sh:Info ;
+    ].
 
 schema:DistributionShape
     a sh:NodeShape ;
