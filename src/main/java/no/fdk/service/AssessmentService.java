@@ -100,15 +100,21 @@ public class AssessmentService {
         List<Indicator> findabilityIndicators = List.of(
             Indicator
                 .builder()
-                .type(IndicatorType.keyword)
-                .weight(10)
-                .conforms(!violations.contains(IndicatorType.keyword))
+                .type(IndicatorType.keywordUsage)
+                .weight(30)
+                .conforms(!violations.contains(IndicatorType.keywordUsage))
                 .build(),
             Indicator
                 .builder()
-                .type(IndicatorType.subject)
-                .weight(20)
-                .conforms(!violations.contains(IndicatorType.subject))
+                .type(IndicatorType.subjectUsage)
+                .weight(60)
+                .conforms(!violations.contains(IndicatorType.subjectUsage))
+                .build(),
+            Indicator
+                .builder()
+                .type(IndicatorType.geoSearch)
+                .weight(10)
+                .conforms(!violations.contains(IndicatorType.geoSearch))
                 .build()
         );
 
@@ -240,7 +246,7 @@ public class AssessmentService {
             String path = entry.resultPath().toString().replaceAll("^<|>$", "");
 
             if (path.equals(DCAT.keyword.getURI())) {
-                violations.add(IndicatorType.keyword);
+                violations.add(IndicatorType.keywordUsage);
             }
 
             if (path.equals(DCAT.accessURL.getURI()) || path.equals(DCAT.endpointURL.getURI())) {
@@ -248,7 +254,11 @@ public class AssessmentService {
             }
 
             if (path.equals(DCTerms.subject.getURI())) {
-                violations.add(IndicatorType.subject);
+                violations.add(IndicatorType.subjectUsage);
+            }
+
+            if (path.equals(DCTerms.spatial.getURI())) {
+                violations.add(IndicatorType.geoSearch);
             }
         }
 
