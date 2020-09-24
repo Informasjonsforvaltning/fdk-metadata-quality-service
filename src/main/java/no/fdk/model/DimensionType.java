@@ -1,6 +1,7 @@
 package no.fdk.model;
 
 public enum DimensionType {
+    accessibility,
     findability,
-    accessibility
+    interoperability
 }
