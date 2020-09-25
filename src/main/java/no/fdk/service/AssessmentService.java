@@ -7,6 +7,7 @@ import no.fdk.exception.NotFoundException;
 import no.fdk.model.*;
 import no.fdk.repository.AssessmentRepository;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.shacl.ValidationReport;
 import org.apache.jena.shacl.validation.ReportEntry;
@@ -92,9 +93,9 @@ public class AssessmentService {
         List<Indicator> accessibilityIndicators = List.of(
             Indicator
                 .builder()
-                .type(IndicatorType.access_url)
+                .type(IndicatorType.distributableData)
                 .weight(10)
-                .conforms(!violations.contains(IndicatorType.access_url))
+                .conforms(!violations.contains(IndicatorType.distributableData))
                 .build()
         );
         List<Indicator> findabilityIndicators = List.of(
@@ -125,6 +126,46 @@ public class AssessmentService {
                 .conforms(!violations.contains(IndicatorType.controlledVocabularyUsage))
                 .build()
         );
+        List<Indicator> readabilityIndicators = List.of(
+            Indicator
+                .builder()
+                .type(IndicatorType.title)
+                .weight(15)
+                .conforms(!violations.contains(IndicatorType.title))
+                .build(),
+            Indicator
+                .builder()
+                .type(IndicatorType.titleNoOrgName)
+                .weight(10)
+                .conforms(!violations.contains(IndicatorType.titleNoOrgName))
+                .build(),
+            Indicator
+                .builder()
+                .type(IndicatorType.description)
+                .weight(10)
+                .conforms(!violations.contains(IndicatorType.description))
+                .build(),
+            Indicator
+                .builder()
+                .type(IndicatorType.descriptionWithoutTitle)
+                .weight(5)
+                .conforms(!violations.contains(IndicatorType.descriptionWithoutTitle))
+                .build()
+        );
+        List<Indicator> reusabilityIndicators = List.of(
+            Indicator
+                .builder()
+                .type(IndicatorType.licenseInformation)
+                .weight(60)
+                .conforms(!violations.contains(IndicatorType.licenseInformation))
+                .build(),
+            Indicator
+                .builder()
+                .type(IndicatorType.contactPoint)
+                .weight(40)
+                .conforms(!violations.contains(IndicatorType.contactPoint))
+                .build()
+        );
 
         return List.of(
             Dimension
@@ -144,6 +185,18 @@ public class AssessmentService {
                 .type(DimensionType.interoperability)
                 .indicators(interoperabilityIndicators)
                 .rating(buildRating(interoperabilityIndicators))
+                .build(),
+            Dimension
+                .builder()
+                .type(DimensionType.readability)
+                .indicators(readabilityIndicators)
+                .rating(buildRating(readabilityIndicators))
+                .build(),
+            Dimension
+                .builder()
+                .type(DimensionType.reusability)
+                .indicators(reusabilityIndicators)
+                .rating(buildRating(reusabilityIndicators))
                 .build()
         );
     }
@@ -240,7 +293,7 @@ public class AssessmentService {
     private Collection<IndicatorType> getViolations(ReportEntry entry, Collection<ReportEntry> reportEntries) {
         Collection<IndicatorType> violations = new HashSet<>();
 
-        if (entry.value() != null) {
+        if (entry.value() != null && !entry.value().isLiteral()) {
             reportEntries
                 .stream()
                 .filter(e -> {
@@ -264,7 +317,7 @@ public class AssessmentService {
             }
 
             if (path.equals(DCAT.accessURL.getURI()) || path.equals(DCAT.endpointURL.getURI())) {
-                violations.add(IndicatorType.access_url);
+                violations.add(IndicatorType.distributableData);
             }
 
             if (path.equals(DCTerms.subject.getURI())) {
@@ -277,6 +330,30 @@ public class AssessmentService {
 
             if (path.equals(DCTerms.format.getURI())) {
                 violations.add(IndicatorType.controlledVocabularyUsage);
+            }
+
+            if (path.equals(DCTerms.license.getURI())) {
+                violations.add(IndicatorType.licenseInformation);
+            }
+
+            if (path.equals(DCAT.contactPoint.getURI())) {
+                violations.add(IndicatorType.contactPoint);
+            }
+
+            if (path.equals(DCTerms.title.getURI())) {
+                if (entry.messages().stream().map(Node::getLiteralValue).anyMatch(v -> v.equals("Property must not contain organization name"))) {
+                    violations.add(IndicatorType.titleNoOrgName);
+                } else {
+                    violations.add(IndicatorType.title);
+                }
+            }
+
+            if (path.equals(DCTerms.description.getURI())) {
+                if (entry.messages().stream().map(Node::getLiteralValue).anyMatch(v -> v.equals("Property must not share any values with dct:title"))) {
+                    violations.add(IndicatorType.descriptionWithoutTitle);
+                } else {
+                    violations.add(IndicatorType.description);
+                }
             }
         }
 

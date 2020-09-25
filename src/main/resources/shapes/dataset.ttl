@@ -1,15 +1,50 @@
 @prefix dcat: <http://www.w3.org/ns/dcat#> .
 @prefix dct: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix schema: <http://schema.org/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 schema:DatasetShape
     a sh:NodeShape ;
     sh:targetClass dcat:Dataset ;
     sh:property [
+        sh:path dct:title ;
+        sh:nodeKind sh:Literal ;
+        sh:minCount 1 ;
+        sh:uniqueLang true ;
+        sh:maxLength 100 ;
+        sh:sparql [
+            sh:message "Property must not contain organization name" ;
+            sh:select """
+                PREFIX dct: <http://purl.org/dc/terms/>
+                PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+                SELECT $this ?name
+                WHERE {
+                    $this dct:publisher ?publisher .
+                    $this dct:title ?title .
+                    ?publisher foaf:name ?name .
+                    FILTER (CONTAINS(LCASE(STR(?title)), LCASE(STR(?name))))
+                }
+            """ ;
+        ] ;
+        sh:severity sh:Info ;
+    ] ;
+    sh:property [
+        sh:path dct:description ;
+        sh:nodeKind sh:Literal ;
+        sh:minCount 1 ;
+        sh:uniqueLang true ;
+        sh:maxLength 400 ;
+        sh:disjoint dct:title ;
+        sh:severity sh:Info ;
+    ] ;
+    sh:property [
         sh:path dcat:distribution ;
         sh:node schema:DistributionShape ;
+        sh:minCount 1 ;
         sh:severity sh:Info ;
     ] ;
     sh:property [
@@ -39,7 +74,22 @@ schema:DatasetShape
         sh:nodeKind sh:BlankNodeOrIRI ;
         sh:minCount 1 ;
         sh:severity sh:Info ;
-    ].
+    ] ;
+    sh:property [
+        sh:path dcat:contactPoint ;
+        sh:or (
+            [
+                sh:node schema:ContactPointOrganizationShape ;
+            ]
+            [
+                sh:node schema:ContactPointAgentShape ;
+            ]
+        ) ;
+        sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Info ;
+    ] .
 
 schema:DistributionShape
     a sh:NodeShape ;
@@ -101,6 +151,20 @@ schema:DistributionShape
         ] ;
         sh:qualifiedMinCount 1 ;
         sh:severity sh:Info ;
+    ] ;
+    sh:property [
+        sh:path dct:license ;
+        sh:or (
+            [
+              sh:nodeKind sh:BlankNode ;
+              sh:node schema:LicenseDocumentShape ;
+            ]
+            [
+              sh:nodeKind sh:IRI ;
+            ]        ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Info ;
     ] .
 
 schema:DataServiceShape
@@ -112,3 +176,110 @@ schema:DataServiceShape
         sh:minCount 1 ;
         sh:severity sh:Info ;
     ] .
+
+schema:LicenseDocumentShape
+    a sh:NodeShape ;
+    sh:targetClass dct:LicenseDocument ;
+    sh:property [
+        sh:path dct:source ;
+        sh:nodeKind sh:IRIOrLiteral ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:severity sh:Info ;
+    ] .
+
+schema:ContactPointShape-organization-name
+    a sh:PropertyShape ;
+    sh:path vcard:organization-name ;
+    sh:nodeKind sh:Literal ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:severity sh:Info .
+
+schema:ContactPointShape-organization-unit
+    a sh:PropertyShape ;
+    sh:path vcard:organization-unit ;
+    sh:nodeKind sh:Literal ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:severity sh:Info .
+
+schema:ContactPointShape-organizationUnit
+    a sh:PropertyShape ;
+    sh:path vcard:organizationUnit ;
+    sh:nodeKind sh:Literal ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:severity sh:Info .
+
+schema:ContactPointShape-hasURL
+    a sh:PropertyShape ;
+    sh:path vcard:hasURL ;
+    sh:nodeKind sh:IRI ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:severity sh:Info .
+
+schema:ContactPointShape-hasEmail
+    a sh:PropertyShape ;
+    sh:path vcard:hasEmail ;
+    sh:nodeKind sh:IRI ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:severity sh:Info .
+
+schema:ContactPointShape-hasTelephone
+    a sh:PropertyShape ;
+    sh:path vcard:hasTelephone ;
+    sh:nodeKind sh:IRI ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:severity sh:Info .
+
+schema:ContactPointOrganizationShape
+    a sh:NodeShape ;
+    sh:targetClass vcard:Organization ;
+    sh:or (
+        [
+            sh:property schema:ContactPointShape-organization-name ;
+        ]
+        [
+            sh:property schema:ContactPointShape-organization-unit ;
+        ]
+        [
+            sh:property schema:ContactPointShape-organizationUnit ;
+        ]
+        [
+            sh:property schema:ContactPointShape-hasURL ;
+        ]
+        [
+            sh:property schema:ContactPointShape-hasEmail ;
+        ]
+        [
+            sh:property schema:ContactPointShape-hasTelephone ;
+        ]
+    ) .
+
+schema:ContactPointAgentShape
+    a sh:NodeShape ;
+    sh:targetClass foaf:Agent ;
+    sh:or (
+        [
+            sh:property schema:ContactPointShape-organization-name ;
+        ]
+        [
+            sh:property schema:ContactPointShape-organization-unit ;
+        ]
+        [
+            sh:property schema:ContactPointShape-organizationUnit ;
+        ]
+        [
+            sh:property schema:ContactPointShape-hasURL ;
+        ]
+        [
+            sh:property schema:ContactPointShape-hasEmail ;
+        ]
+        [
+            sh:property schema:ContactPointShape-hasTelephone ;
+        ]
+    ) .
