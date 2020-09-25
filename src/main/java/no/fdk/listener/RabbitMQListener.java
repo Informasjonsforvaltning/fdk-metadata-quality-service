@@ -3,7 +3,6 @@ package no.fdk.listener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fdk.configuration.ApplicationProperties;
-import no.fdk.model.Assessment;
 import no.fdk.model.EntityType;
 import no.fdk.service.AssessmentService;
 import no.fdk.utils.GraphUtils;
@@ -12,7 +11,6 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static java.lang.String.format;
