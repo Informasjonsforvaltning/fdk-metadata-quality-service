@@ -94,7 +94,7 @@ public class AssessmentService {
             Indicator
                 .builder()
                 .type(IndicatorType.distributableData)
-                .weight(10)
+                .weight(100)
                 .conforms(!violations.contains(IndicatorType.distributableData))
                 .build()
         );
