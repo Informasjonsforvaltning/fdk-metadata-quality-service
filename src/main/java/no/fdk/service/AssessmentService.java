@@ -24,6 +24,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.springframework.data.mongodb.core.aggregation.Fields.UNDERSCORE_ID;
@@ -55,16 +56,27 @@ public class AssessmentService {
         return (catalogId != null
             ? assessmentRepository.findAllByEntityCatalogIdAndEntityType(catalogId, entityType)
             : assessmentRepository.findAllByEntityCatalogUriAndEntityType(catalogUri, entityType))
-            .map(Assessment::getRating)
-            .reduce((current, previous) ->
+            .reduce(
                 Rating
                     .builder()
-                    .score(previous.getScore() + current.getScore())
-                    .maxScore(previous.getMaxScore() + current.getMaxScore())
-                    .satisfiedCriteria(previous.getSatisfiedCriteria() + current.getSatisfiedCriteria())
-                    .totalCriteria(previous.getTotalCriteria() + current.getTotalCriteria())
-                    .category(determineRatingCategory(previous.getScore() + current.getScore(), previous.getMaxScore() + current.getMaxScore()))
-                    .build())
+                    .score(0)
+                    .maxScore(0)
+                    .satisfiedCriteria(0)
+                    .totalCriteria(0)
+                    .dimensionsRating(Collections.emptyMap())
+                    .build(),
+                (rating, assessment) ->
+                    Rating
+                        .builder()
+                        .score(rating.getScore() + assessment.getRating().getScore())
+                        .maxScore(rating.getMaxScore() + assessment.getRating().getMaxScore())
+                        .satisfiedCriteria(rating.getSatisfiedCriteria() + assessment.getRating().getSatisfiedCriteria())
+                        .totalCriteria(rating.getTotalCriteria() + assessment.getRating().getTotalCriteria())
+                        .category(determineRatingCategory(rating.getScore() + assessment.getRating().getScore(), rating.getMaxScore() + assessment.getRating().getMaxScore()))
+                        .dimensionsRating(buildAggregateDimensionsRating(rating.getDimensionsRating(), assessment.getDimensions()))
+                        .build()
+            )
+            .doOnError(Throwable::printStackTrace)
             .switchIfEmpty(Mono.error(new NotFoundException(format("Could not find any entries with catalog ID: %s or catalog URI: %s and entity type: %s", catalogId, catalogUri, entityType))));
     }
 
@@ -224,6 +236,24 @@ public class AssessmentService {
             .totalCriteria(indicators.size())
             .category(determineRatingCategory(score, maxScore))
             .build();
+    }
+
+    private Map<DimensionType, Rating> buildAggregateDimensionsRating(
+        Map<DimensionType, Rating> previousDimensionsRating,
+        Collection<Dimension> dimensions
+    ) {
+        return dimensions
+            .stream()
+            .collect(Collectors.toMap(Dimension::getType, dimension -> {
+                Rating currentRating = buildRating(dimension.getIndicators());
+                Rating previousRating = previousDimensionsRating.get(dimension.getType());
+
+                return Rating
+                    .builder()
+                    .score((previousRating != null ? previousRating.getScore() : 0) + currentRating.getScore())
+                    .maxScore((previousRating != null ? previousRating.getMaxScore() : 0) + currentRating.getMaxScore())
+                    .build();
+            }));
     }
 
     private RatingCategory determineRatingCategory(Integer score, Integer maxScore) {
