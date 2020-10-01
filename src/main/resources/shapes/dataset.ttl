@@ -39,6 +39,19 @@ schema:DatasetShape
         sh:uniqueLang true ;
         sh:maxLength 400 ;
         sh:disjoint dct:title ;
+        sh:sparql [
+            sh:message "Property must not contain the value of dct:title" ;
+            sh:select """
+                PREFIX dct: <http://purl.org/dc/terms/>
+
+                SELECT $this ?description
+                WHERE {
+                    $this dct:title ?title .
+                    $this dct:description ?description .
+                    FILTER (CONTAINS(LCASE(STR(?description)), LCASE(STR(?title))))
+                }
+            """ ;
+        ] ;
         sh:severity sh:Info ;
     ] ;
     sh:property [
