@@ -349,7 +349,7 @@ public class AssessmentService {
             }
 
             if (path.equals(DCTerms.description.getURI())) {
-                if (entry.messages().stream().map(Node::getLiteralValue).anyMatch(v -> v.equals("Property must not share any values with dct:title"))) {
+                if (entry.messages().stream().map(Node::getLiteralValue).anyMatch(v -> v.equals("Property must not share any values with dct:title") || v.equals("Property must not contain the value of dct:title"))) {
                     violations.add(IndicatorType.descriptionWithoutTitle);
                 } else {
                     violations.add(IndicatorType.description);
