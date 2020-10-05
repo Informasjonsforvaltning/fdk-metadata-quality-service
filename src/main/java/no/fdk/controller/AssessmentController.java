@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 import java.util.Set;
 
 @RestController
+@CrossOrigin(origins = {"*"})
 @RequestMapping("/assessment")
 @RequiredArgsConstructor
 public class AssessmentController {
