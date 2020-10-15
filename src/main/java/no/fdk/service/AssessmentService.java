@@ -25,6 +25,7 @@ import reactor.core.publisher.Mono;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static org.springframework.data.mongodb.core.aggregation.Fields.UNDERSCORE_ID;
@@ -346,7 +347,7 @@ public class AssessmentService {
                 violations.add(IndicatorType.keywordUsage);
             }
 
-            if (path.equals(DCAT.accessURL.getURI()) || path.equals(DCAT.endpointURL.getURI())) {
+            if (Stream.of(DCAT.distribution, DCAT.accessURL, DCAT.endpointURL).map(Resource::getURI).anyMatch(path::equals)) {
                 violations.add(IndicatorType.distributableData);
             }
 
@@ -358,7 +359,7 @@ public class AssessmentService {
                 violations.add(IndicatorType.geoSearch);
             }
 
-            if (path.equals(DCTerms.format.getURI())) {
+            if (Stream.of(DCAT.distribution, DCTerms.format).map(Resource::getURI).anyMatch(path::equals)) {
                 violations.add(IndicatorType.controlledVocabularyUsage);
             }
 
