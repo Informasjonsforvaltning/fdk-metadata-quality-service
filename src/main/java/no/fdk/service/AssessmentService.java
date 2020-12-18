@@ -40,13 +40,11 @@ public class AssessmentService {
     private final ReactiveFluentMongoOperations reactiveFluentMongoOperations;
 
     public Flux<Assessment> assess(Graph graph, EntityType entityType) {
-        Collection<Assessment> assessments = new ArrayList<>();
         ValidationReport report = validationService.validate(graph);
 
-        extractEntitiesFromGraph(graph, entityType)
-            .forEach(entity -> assessments.add(generateAssessmentForEntity(entity, report)));
-
-        return Flux.fromIterable(assessments);
+        return extractEntitiesFromGraph(graph, entityType)
+            .filter(entity -> entity.getType() == entityType)
+            .map(entity -> generateAssessmentForEntity(entity, report));
     }
 
     public Mono<Rating> getCatalogAssessmentRating(String catalogId, String catalogUri, EntityType entityType) {
@@ -271,27 +269,25 @@ public class AssessmentService {
         return RatingCategory.poor;
     }
 
-    private Collection<Entity> extractEntitiesFromGraph(Graph graph, EntityType entityType) {
-        Collection<Entity> entities = new ArrayList<>();
+    private Flux<Entity> extractEntitiesFromGraph(Graph graph, EntityType entityType) {
         Model model = ModelFactory.createModelForGraph(graph);
 
-        if (entityType == EntityType.dataset) {
-            model
-                .listResourcesWithProperty(RDF.type, DCAT.Dataset)
-                .toList()
-                .forEach(r -> {
-                    Entity entity = Entity
-                        .builder()
-                        .uri(r.getURI())
-                        .type(EntityType.dataset)
-                        .catalog(extractCatalogFromModel(model, r))
-                        .build();
+        return Flux.concat(extractDatasetEntitiesFromModel(model));
+    }
 
-                    entities.add(entity);
-                });
-        }
+    private Flux<Entity> extractDatasetEntitiesFromModel(Model model) {
+        List<Resource> resources = model
+            .listResourcesWithProperty(RDF.type, DCAT.Dataset)
+            .toList();
 
-        return entities;
+        return Flux.fromIterable(resources)
+            .map(resource -> Entity
+                .builder()
+                .uri(resource.getURI())
+                .type(EntityType.dataset)
+                .catalog(extractCatalogFromModel(model, resource))
+                .build()
+            );
     }
 
     private Assessment generateAssessmentForEntity(Entity entity, ValidationReport report) {
@@ -387,6 +383,7 @@ public class AssessmentService {
                 }
             }
         }
+
 
         return violations;
     }
