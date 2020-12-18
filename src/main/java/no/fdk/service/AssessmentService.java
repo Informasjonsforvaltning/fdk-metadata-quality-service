@@ -334,7 +334,8 @@ public class AssessmentService {
 
                     return false;
                 })
-                .findAny()
+                .filter(e -> !entry.same(e))
+                .findFirst()
                 .ifPresent(relatedEntry -> violations.addAll(getViolations(relatedEntry, reportEntries)));
         } else {
             String path = entry.resultPath().toString().replaceAll("^<|>$", "");
