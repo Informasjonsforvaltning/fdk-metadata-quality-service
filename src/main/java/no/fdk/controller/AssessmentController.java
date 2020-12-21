@@ -24,7 +24,7 @@ public class AssessmentController {
     private final AssessmentService assessmentService;
 
     @PostMapping
-    private Flux<Assessment> assessGraphNodes(
+    public Flux<Assessment> assessGraphNodes(
         @RequestHeader("content-type") String contentType,
         @RequestParam EntityType entityType,
         @RequestBody String body
@@ -37,7 +37,7 @@ public class AssessmentController {
     }
 
     @GetMapping("/catalog/rating")
-    private Mono<Rating> getCatalogAssessmentRating(
+    public Mono<Rating> getCatalogAssessmentRating(
         @RequestParam(required = false) String catalogId,
         @RequestParam(required = false) String catalogUri,
         @RequestParam EntityType entityType
@@ -46,14 +46,14 @@ public class AssessmentController {
     }
 
     @GetMapping("/entity")
-    private Mono<Assessment> getEntityAssessment(
+    public Mono<Assessment> getEntityAssessment(
         @RequestParam String entityUri
     ) {
         return assessmentService.getEntityAssessment(entityUri);
     }
 
     @GetMapping("/entities")
-    private Flux<Assessment> getEntitiesAssessments(
+    public Flux<Assessment> getEntitiesAssessments(
         @RequestParam Set<String> entityUris
     ) {
         return assessmentService.getEntitiesAssessments(entityUris);

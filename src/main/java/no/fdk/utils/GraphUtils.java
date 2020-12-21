@@ -11,6 +11,9 @@ import java.io.StringWriter;
 
 public class GraphUtils {
 
+    private GraphUtils() {
+    }
+
     public static Graph stringToGraph(String string, Lang language) {
         Graph graph = GraphFactory.createDefaultGraph();
         RDFParserBuilder.create().source(new StringReader(string)).lang(language).parse(graph);

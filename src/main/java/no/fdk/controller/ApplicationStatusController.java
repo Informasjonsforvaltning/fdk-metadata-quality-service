@@ -8,12 +8,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class ApplicationStatusController {
 
     @GetMapping("/ping")
-    private ResponseEntity<Void> ping() {
+    public ResponseEntity<Void> ping() {
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/ready")
-    private ResponseEntity<Void> ready() {
+    public ResponseEntity<Void> ready() {
         return ResponseEntity.ok().build();
     }
 

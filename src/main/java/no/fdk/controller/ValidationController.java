@@ -18,7 +18,7 @@ public class ValidationController {
     private final ValidationService validationService;
 
     @PostMapping
-    private Mono<String> validateGraph(
+    public Mono<String> validateGraph(
         @RequestHeader("content-type") String contentType,
         @RequestHeader("accept") String accept,
         @RequestBody String body
