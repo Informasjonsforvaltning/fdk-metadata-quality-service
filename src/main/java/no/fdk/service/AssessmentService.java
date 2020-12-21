@@ -4,17 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fdk.exception.BadRequestException;
 import no.fdk.exception.NotFoundException;
-import no.fdk.model.*;
+import no.fdk.model.Assessment;
+import no.fdk.model.EntityType;
+import no.fdk.model.Rating;
 import no.fdk.repository.AssessmentRepository;
+import no.fdk.utils.AssessmentUtils;
 import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
-import org.apache.jena.rdf.model.*;
-import org.apache.jena.shacl.ValidationReport;
-import org.apache.jena.shacl.validation.ReportEntry;
-import org.apache.jena.util.URIref;
-import org.apache.jena.vocabulary.DCAT;
-import org.apache.jena.vocabulary.DCTerms;
-import org.apache.jena.vocabulary.RDF;
 import org.springframework.data.mongodb.core.FindAndReplaceOptions;
 import org.springframework.data.mongodb.core.ReactiveFluentMongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -22,10 +17,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.*;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Collections;
+import java.util.Set;
 
 import static java.lang.String.format;
 import static org.springframework.data.mongodb.core.aggregation.Fields.UNDERSCORE_ID;
@@ -40,11 +33,8 @@ public class AssessmentService {
     private final ReactiveFluentMongoOperations reactiveFluentMongoOperations;
 
     public Flux<Assessment> assess(Graph graph, EntityType entityType) {
-        ValidationReport report = validationService.validate(graph);
-
-        return extractEntitiesFromGraph(graph, entityType)
-            .filter(entity -> entity.getType() == entityType)
-            .map(entity -> generateAssessmentForEntity(entity, report));
+        return AssessmentUtils.extractEntityResourcePairsFromGraph(graph, entityType, validationService.validate(graph))
+            .map(AssessmentUtils::generateAssessmentForEntity);
     }
 
     public Mono<Rating> getCatalogAssessmentRating(String catalogId, String catalogUri, EntityType entityType) {
@@ -64,16 +54,7 @@ public class AssessmentService {
                     .totalCriteria(0)
                     .dimensionsRating(Collections.emptyMap())
                     .build(),
-                (rating, assessment) ->
-                    Rating
-                        .builder()
-                        .score(rating.getScore() + assessment.getRating().getScore())
-                        .maxScore(rating.getMaxScore() + assessment.getRating().getMaxScore())
-                        .satisfiedCriteria(rating.getSatisfiedCriteria() + assessment.getRating().getSatisfiedCriteria())
-                        .totalCriteria(rating.getTotalCriteria() + assessment.getRating().getTotalCriteria())
-                        .category(determineRatingCategory(rating.getScore() + assessment.getRating().getScore(), rating.getMaxScore() + assessment.getRating().getMaxScore()))
-                        .dimensionsRating(buildAggregateDimensionsRating(rating.getDimensionsRating(), assessment.getDimensions()))
-                        .build()
+                AssessmentUtils::buildAggregatedRating
             )
             .doOnError(Throwable::printStackTrace)
             .switchIfEmpty(Mono.error(new NotFoundException(format("Could not find any entries with catalog ID: %s or catalog URI: %s and entity type: %s", catalogId, catalogUri, entityType))));
@@ -98,338 +79,6 @@ public class AssessmentService {
                 .withOptions(FindAndReplaceOptions.options().returnNew().upsert())
                 .findAndReplace()
             );
-    }
-
-    private Collection<Dimension> buildDimensions(Collection<IndicatorType> violations) {
-        List<Indicator> accessibilityIndicators = List.of(
-            Indicator
-                .builder()
-                .type(IndicatorType.distributableData)
-                .weight(100)
-                .conforms(!violations.contains(IndicatorType.distributableData))
-                .build()
-        );
-        List<Indicator> findabilityIndicators = List.of(
-            Indicator
-                .builder()
-                .type(IndicatorType.keywordUsage)
-                .weight(30)
-                .conforms(!violations.contains(IndicatorType.keywordUsage))
-                .build(),
-            Indicator
-                .builder()
-                .type(IndicatorType.subjectUsage)
-                .weight(60)
-                .conforms(!violations.contains(IndicatorType.subjectUsage))
-                .build(),
-            Indicator
-                .builder()
-                .type(IndicatorType.geoSearch)
-                .weight(10)
-                .conforms(!violations.contains(IndicatorType.geoSearch))
-                .build()
-        );
-        List<Indicator> interoperabilityIndicators = List.of(
-            Indicator
-                .builder()
-                .type(IndicatorType.controlledVocabularyUsage)
-                .weight(100)
-                .conforms(!violations.contains(IndicatorType.controlledVocabularyUsage))
-                .build()
-        );
-        List<Indicator> readabilityIndicators = List.of(
-            Indicator
-                .builder()
-                .type(IndicatorType.title)
-                .weight(15)
-                .conforms(!violations.contains(IndicatorType.title))
-                .build(),
-            Indicator
-                .builder()
-                .type(IndicatorType.titleNoOrgName)
-                .weight(10)
-                .conforms(!violations.contains(IndicatorType.titleNoOrgName))
-                .build(),
-            Indicator
-                .builder()
-                .type(IndicatorType.description)
-                .weight(10)
-                .conforms(!violations.contains(IndicatorType.description))
-                .build(),
-            Indicator
-                .builder()
-                .type(IndicatorType.descriptionWithoutTitle)
-                .weight(5)
-                .conforms(!violations.contains(IndicatorType.descriptionWithoutTitle))
-                .build()
-        );
-        List<Indicator> reusabilityIndicators = List.of(
-            Indicator
-                .builder()
-                .type(IndicatorType.licenseInformation)
-                .weight(60)
-                .conforms(!violations.contains(IndicatorType.licenseInformation))
-                .build(),
-            Indicator
-                .builder()
-                .type(IndicatorType.contactPoint)
-                .weight(40)
-                .conforms(!violations.contains(IndicatorType.contactPoint))
-                .build()
-        );
-
-        return List.of(
-            Dimension
-                .builder()
-                .type(DimensionType.accessibility)
-                .indicators(accessibilityIndicators)
-                .rating(buildRating(accessibilityIndicators))
-                .build(),
-            Dimension
-                .builder()
-                .type(DimensionType.findability)
-                .indicators(findabilityIndicators)
-                .rating(buildRating(findabilityIndicators))
-                .build(),
-            Dimension
-                .builder()
-                .type(DimensionType.interoperability)
-                .indicators(interoperabilityIndicators)
-                .rating(buildRating(interoperabilityIndicators))
-                .build(),
-            Dimension
-                .builder()
-                .type(DimensionType.readability)
-                .indicators(readabilityIndicators)
-                .rating(buildRating(readabilityIndicators))
-                .build(),
-            Dimension
-                .builder()
-                .type(DimensionType.reusability)
-                .indicators(reusabilityIndicators)
-                .rating(buildRating(reusabilityIndicators))
-                .build()
-        );
-    }
-
-    private Rating buildRating(Collection<Indicator> indicators) {
-        Integer score = indicators
-            .stream()
-            .filter(Indicator::getConforms)
-            .mapToInt(Indicator::getWeight)
-            .sum();
-        Integer maxScore = indicators
-            .stream()
-            .mapToInt(Indicator::getWeight)
-            .sum();
-        long satisfiedCriteria = indicators
-            .stream()
-            .filter(Indicator::getConforms)
-            .count();
-
-        return Rating
-            .builder()
-            .score(score)
-            .maxScore(maxScore)
-            .satisfiedCriteria(Math.toIntExact(satisfiedCriteria))
-            .totalCriteria(indicators.size())
-            .category(determineRatingCategory(score, maxScore))
-            .build();
-    }
-
-    private Map<DimensionType, Rating> buildAggregateDimensionsRating(
-        Map<DimensionType, Rating> previousDimensionsRating,
-        Collection<Dimension> dimensions
-    ) {
-        return dimensions
-            .stream()
-            .collect(Collectors.toMap(Dimension::getType, dimension -> {
-                Rating currentRating = buildRating(dimension.getIndicators());
-                Rating previousRating = previousDimensionsRating.get(dimension.getType());
-
-                return Rating
-                    .builder()
-                    .score((previousRating != null ? previousRating.getScore() : 0) + currentRating.getScore())
-                    .maxScore((previousRating != null ? previousRating.getMaxScore() : 0) + currentRating.getMaxScore())
-                    .build();
-            }));
-    }
-
-    private RatingCategory determineRatingCategory(Integer score, Integer maxScore) {
-        double ratio = score.doubleValue() / maxScore.doubleValue();
-
-        if (ratio >= 0.75) {
-            return RatingCategory.excellent;
-        } else if (ratio >= 0.5 && ratio < 0.75) {
-            return RatingCategory.good;
-        } else if (ratio >= 0.25 && ratio < 0.50) {
-            return RatingCategory.sufficient;
-        }
-
-        return RatingCategory.poor;
-    }
-
-    private Flux<Entity> extractEntitiesFromGraph(Graph graph, EntityType entityType) {
-        Model model = ModelFactory.createModelForGraph(graph);
-
-        return Flux.concat(extractDatasetEntitiesFromModel(model));
-    }
-
-    private Flux<Entity> extractDatasetEntitiesFromModel(Model model) {
-        List<Resource> resources = model
-            .listResourcesWithProperty(RDF.type, DCAT.Dataset)
-            .toList();
-
-        return Flux.fromIterable(resources)
-            .map(resource -> Entity
-                .builder()
-                .uri(resource.getURI())
-                .type(EntityType.dataset)
-                .catalog(extractCatalogFromModel(model, resource))
-                .build()
-            );
-    }
-
-    private Assessment generateAssessmentForEntity(Entity entity, ValidationReport report) {
-        Collection<IndicatorType> violations = new HashSet<>();
-
-        if (!report.conforms()) {
-            Collection<ReportEntry> reportEntries = report.getEntries();
-
-            reportEntries
-                .stream()
-                .filter(entry -> entry.focusNode().hasURI(entity.getUri()))
-                .forEach(entry -> violations.addAll(getViolations(entry, reportEntries)));
-        }
-
-        Collection<Dimension> dimensions = buildDimensions(violations);
-        Collection<Indicator> indicators = dimensions
-            .stream()
-            .map(Dimension::getIndicators)
-            .collect(ArrayList::new, List::addAll, List::addAll);
-
-        return Assessment
-            .builder()
-            .id(entity.getUri())
-            .entity(entity)
-            .dimensions(dimensions)
-            .rating(buildRating(indicators))
-            .build();
-    }
-
-    private Collection<IndicatorType> getViolations(ReportEntry entry, Collection<ReportEntry> reportEntries) {
-        Collection<IndicatorType> violations = new HashSet<>();
-
-        if (entry.value() != null && !entry.value().isLiteral()) {
-            reportEntries
-                .stream()
-                .filter(e -> {
-                    if (e.focusNode().isURI() && entry.value().isURI()) {
-                        return e.focusNode().getURI().equals(entry.value().getURI());
-                    }
-
-                    if (e.focusNode().isBlank() && entry.value().isBlank()) {
-                        return e.focusNode().getBlankNodeId().equals(entry.value().getBlankNodeId());
-                    }
-
-                    return false;
-                })
-                .filter(e -> !entry.same(e))
-                .findFirst()
-                .ifPresent(relatedEntry -> violations.addAll(getViolations(relatedEntry, reportEntries)));
-        } else {
-            String path = entry.resultPath().toString().replaceAll("^<|>$", "");
-
-            if (path.equals(DCAT.keyword.getURI())) {
-                violations.add(IndicatorType.keywordUsage);
-            }
-
-            if (Stream.of(DCAT.distribution, DCAT.accessURL, DCAT.endpointURL).map(Resource::getURI).anyMatch(path::equals)) {
-                violations.add(IndicatorType.distributableData);
-            }
-
-            if (path.equals(DCTerms.subject.getURI())) {
-                violations.add(IndicatorType.subjectUsage);
-            }
-
-            if (path.equals(DCTerms.spatial.getURI())) {
-                violations.add(IndicatorType.geoSearch);
-            }
-
-            if (Stream.of(DCAT.distribution, DCTerms.format).map(Resource::getURI).anyMatch(path::equals)) {
-                violations.add(IndicatorType.controlledVocabularyUsage);
-            }
-
-            if (path.equals(DCTerms.license.getURI())) {
-                violations.add(IndicatorType.licenseInformation);
-            }
-
-            if (path.equals(DCAT.contactPoint.getURI())) {
-                violations.add(IndicatorType.contactPoint);
-            }
-
-            if (path.equals(DCTerms.title.getURI())) {
-                if (entry.messages().stream().map(Node::getLiteralValue).anyMatch(v -> v.equals("Property must not contain organization name"))) {
-                    violations.add(IndicatorType.titleNoOrgName);
-                } else {
-                    violations.add(IndicatorType.title);
-                }
-            }
-
-            if (path.equals(DCTerms.description.getURI())) {
-                if (entry.messages().stream().map(Node::getLiteralValue).anyMatch(v -> v.equals("Property must not share any values with dct:title") || v.equals("Property must not contain the value of dct:title"))) {
-                    violations.add(IndicatorType.descriptionWithoutTitle);
-                } else {
-                    violations.add(IndicatorType.description);
-                }
-            }
-        }
-
-
-        return violations;
-    }
-
-    private Catalog extractCatalogFromModel(Model model, Resource datasetResource) {
-        String catalogId = null, catalogUri = null;
-
-        ResIterator catalogIterator = model.listResourcesWithProperty(DCAT.dataset, ResourceFactory.createResource(URIref.encode(datasetResource.getURI())));
-
-        if (catalogIterator.hasNext()) {
-            Resource catalogResource = catalogIterator.nextResource();
-
-            catalogId = extractPublisherIdFromCatalogResource(catalogResource);
-            catalogUri = catalogResource.getURI();
-        }
-
-        if (catalogId == null && datasetResource.hasProperty(DCTerms.publisher)) {
-            catalogId = extractPublisherIdFromPublisherResource(datasetResource.getPropertyResourceValue(DCTerms.publisher));
-        }
-
-        return Catalog
-            .builder()
-            .id(catalogId)
-            .uri(catalogUri)
-            .build();
-    }
-
-    private String extractPublisherIdFromCatalogResource(Resource resource) {
-        Resource publisherResource = resource.hasProperty(DCTerms.publisher)
-            ? resource.getProperty(DCTerms.publisher).getResource()
-            : null;
-
-        return publisherResource != null && publisherResource.hasProperty(DCTerms.identifier)
-            ? publisherResource.getProperty(DCTerms.identifier).getString()
-            : null;
-    }
-
-    private String extractPublisherIdFromPublisherResource(Resource resource) {
-        String identifier = resource != null && resource.hasProperty(DCTerms.identifier)
-            ? resource.getProperty(DCTerms.identifier).getString()
-            : null;
-
-        return identifier != null && Pattern.matches("\\d{9}", identifier)
-            ? identifier
-            : null;
     }
 
 }

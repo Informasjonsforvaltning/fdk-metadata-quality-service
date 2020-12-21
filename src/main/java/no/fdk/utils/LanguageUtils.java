@@ -1,12 +1,12 @@
 package no.fdk.utils;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.riot.Lang;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class LanguageUtils {
-
-    private LanguageUtils() {
-    }
 
     public static Lang mediaTypeToRdfLanguage(String mediaType) {
         if (StringUtils.containsIgnoreCase(mediaType, "text/turtle")) {
