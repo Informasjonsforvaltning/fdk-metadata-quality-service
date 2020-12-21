@@ -8,7 +8,7 @@ import lombok.Data;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Indicator {
-    private IndicatorType type;
-    private Integer weight;
-    private Boolean conforms;
+    private final IndicatorType type;
+    private final Integer weight;
+    private final Boolean conforms;
 }

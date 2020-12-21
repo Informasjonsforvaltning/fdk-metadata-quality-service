@@ -15,11 +15,11 @@ import java.util.Collection;
 @Document("assessments")
 public class Assessment {
     @Id
-    private String id;
-    private Entity entity;
-    private Rating rating;
-    private Collection<Dimension> dimensions;
+    private final String id;
+    private final Entity entity;
+    private final Rating rating;
+    private final Collection<Dimension> dimensions;
     @LastModifiedDate
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime updated;
+    private final LocalDateTime updated;
 }

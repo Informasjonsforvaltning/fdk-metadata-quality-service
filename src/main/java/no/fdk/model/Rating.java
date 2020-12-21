@@ -10,10 +10,10 @@ import java.util.Map;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Rating {
-    private Integer score;
-    private Integer maxScore;
-    private Integer satisfiedCriteria;
-    private Integer totalCriteria;
-    private RatingCategory category;
-    private Map<DimensionType, Rating> dimensionsRating;
+    private final Integer score;
+    private final Integer maxScore;
+    private final Integer satisfiedCriteria;
+    private final Integer totalCriteria;
+    private final RatingCategory category;
+    private final Map<DimensionType, Rating> dimensionsRating;
 }

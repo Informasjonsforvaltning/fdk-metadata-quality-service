@@ -8,7 +8,7 @@ import lombok.Data;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Entity {
-    private String uri;
-    private EntityType type;
-    private Catalog catalog;
+    private final String uri;
+    private final EntityType type;
+    private final Catalog catalog;
 }
