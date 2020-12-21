@@ -10,7 +10,7 @@ import java.util.Collection;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Dimension {
-    private DimensionType type;
-    private Rating rating;
-    private Collection<Indicator> indicators;
+    private final DimensionType type;
+    private final Rating rating;
+    private final Collection<Indicator> indicators;
 }

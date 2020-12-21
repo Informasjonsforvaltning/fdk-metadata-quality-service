@@ -8,6 +8,6 @@ import lombok.Data;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Catalog {
-    private String id;
-    private String uri;
+    private final String id;
+    private final String uri;
 }
