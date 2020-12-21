@@ -6,293 +6,318 @@
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-schema:DatasetShape
+schema:DatasetShape-title
+    a sh:PropertyShape ;
+    sh:path dct:title ;
+    sh:nodeKind sh:Literal ;
+    sh:minCount 1 ;
+    sh:uniqueLang true ;
+    sh:maxLength 100 ;
+    sh:sparql [
+        sh:message "Property must not contain organization name" ;
+        sh:select """
+            PREFIX dct: <http://purl.org/dc/terms/>
+            PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+            SELECT $this ?name
+            WHERE {
+                $this dct:publisher ?publisher .
+                $this $PATH ?title .
+                ?publisher foaf:name ?name .
+                FILTER (CONTAINS(LCASE(STR(?title)), LCASE(STR(?name))))
+            }
+        """ ;
+    ] ;
+    sh:severity sh:Info .
+
+schema:DatasetShape-description
+    a sh:PropertyShape ;
+    sh:path dct:description ;
+    sh:nodeKind sh:Literal ;
+    sh:minCount 1 ;
+    sh:uniqueLang true ;
+    sh:maxLength 400 ;
+    sh:disjoint dct:title ;
+    sh:sparql [
+        sh:message "Property must not contain the value of dct:title" ;
+        sh:select """
+            PREFIX dct: <http://purl.org/dc/terms/>
+
+            SELECT $this ?description
+            WHERE {
+                $this dct:title ?title .
+                $this $PATH ?description .
+                FILTER (CONTAINS(LCASE(STR(?description)), LCASE(STR(?title))))
+            }
+        """ ;
+    ] ;
+    sh:severity sh:Info .
+
+schema:DistributionShape-accessURL
+    a sh:PropertyShape ;
+    sh:path [ sh:alternativePath ( dcat:accessURL ( dcat:accessService dcat:endpointURL ) ) ] ;
+    sh:nodeKind sh:IRI ;
+    sh:minCount 1 ;
+    sh:severity sh:Info .
+
+schema:DistributionShape-accessService
+    a sh:PropertyShape ;
+    sh:path dcat:accessService ;
+    sh:node schema:DataServiceShape ;
+    sh:severity sh:Info .
+
+schema:MediaTypeShape
     a sh:NodeShape ;
-    sh:targetClass dcat:Dataset ;
-    sh:property [
-        sh:path dct:title ;
-        sh:nodeKind sh:Literal ;
-        sh:minCount 1 ;
-        sh:uniqueLang true ;
-        sh:maxLength 100 ;
-        sh:sparql [
-            sh:message "Property must not contain organization name" ;
-            sh:select """
-                PREFIX dct: <http://purl.org/dc/terms/>
-                PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+    sh:nodeKind sh:Literal ;
+    sh:datatype xsd:string ;
+    sh:targetObjectsOf dct:format , dcat:mediaType ;
+    sh:message "Property must be a valid media type" ;
+    sh:in (
+        "text/csv"
+        "application/gml+xml"
+        "text/html"
+        "application/json"
+        "application/javascript"
+        "application/vnd.geo+json"
+        "application/vnd.google-earth.kml+xml"
+        "application/vnd.oasis.opendocument.spreadsheet"
+        "application/rdf+xml"
+        "text/xml"
+        "application/x-­ogc-sosi"
+        "image/tiff"
+        "text/tab-separated-values"
+        "text/plain"
+        "application/x.wfs"
+        "application/x.wms"
+        "application/vnd.sealed-xls"
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        "application/xml"
+        "application/x.yaml"
+        "application/octet-stream"
+        "application/ld+json"
+        "text/turtle"
+        "application/n-triples"
+        "application/gpx+xml"
+        "application/x.siri"
+        "application/x.gtfs"
+        "application/x.gtfsrt"
+        "application/x.netex"
+        "application/x.ualf"
+        "application/zip"
+        "application/pdf"
+        "application/sql"
+        "application/geopackage+sqlite3"
+        "application/vnd.sqlite3"
 
-                SELECT $this ?name
-                WHERE {
-                    $this dct:publisher ?publisher .
-                    $this dct:title ?title .
-                    ?publisher foaf:name ?name .
-                    FILTER (CONTAINS(LCASE(STR(?title)), LCASE(STR(?name))))
-                }
-            """ ;
-        ] ;
-        sh:severity sh:Info ;
-    ] ;
-    sh:property [
-        sh:path dct:description ;
-        sh:nodeKind sh:Literal ;
-        sh:minCount 1 ;
-        sh:uniqueLang true ;
-        sh:maxLength 400 ;
-        sh:disjoint dct:title ;
-        sh:sparql [
-            sh:message "Property must not contain the value of dct:title" ;
-            sh:select """
-                PREFIX dct: <http://purl.org/dc/terms/>
+        "https://www.iana.org/assignments/media-types/text/csv"
+        "https://www.iana.org/assignments/media-types/application/gml+xml"
+        "https://www.iana.org/assignments/media-types/text/html"
+        "https://www.iana.org/assignments/media-types/application/json"
+        "https://www.iana.org/assignments/media-types/application/javascript"
+        "https://www.iana.org/assignments/media-types/application/vnd.geo+json"
+        "https://www.iana.org/assignments/media-types/application/vnd.google-earth.kml+xml"
+        "https://www.iana.org/assignments/media-types/application/vnd.oasis.opendocument.spreadsheet"
+        "https://www.iana.org/assignments/media-types/application/rdf+xml"
+        "https://www.iana.org/assignments/media-types/text/xml"
+        "https://www.iana.org/assignments/media-types/application/x-­ogc-sosi"
+        "https://www.iana.org/assignments/media-types/image/tiff"
+        "https://www.iana.org/assignments/media-types/text/tab-separated-values"
+        "https://www.iana.org/assignments/media-types/text/plain"
+        "https://www.iana.org/assignments/media-types/application/x.wfs"
+        "https://www.iana.org/assignments/media-types/application/x.wms"
+        "https://www.iana.org/assignments/media-types/application/vnd.sealed-xls"
+        "https://www.iana.org/assignments/media-types/application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        "https://www.iana.org/assignments/media-types/application/xml"
+        "https://www.iana.org/assignments/media-types/application/x.yaml"
+        "https://www.iana.org/assignments/media-types/application/octet-stream"
+        "https://www.iana.org/assignments/media-types/application/ld+json"
+        "https://www.iana.org/assignments/media-types/text/turtle"
+        "https://www.iana.org/assignments/media-types/application/n-triples"
+        "https://www.iana.org/assignments/media-types/application/gpx+xml"
+        "https://www.iana.org/assignments/media-types/application/x.siri"
+        "https://www.iana.org/assignments/media-types/application/x.gtfs"
+        "https://www.iana.org/assignments/media-types/application/x.gtfsrt"
+        "https://www.iana.org/assignments/media-types/application/x.netex"
+        "https://www.iana.org/assignments/media-types/application/x.ualf"
+        "https://www.iana.org/assignments/media-types/application/zip"
+        "https://www.iana.org/assignments/media-types/application/pdf"
+        "https://www.iana.org/assignments/media-types/application/sql"
+        "https://www.iana.org/assignments/media-types/application/geopackage+sqlite3"
+        "https://www.iana.org/assignments/media-types/application/vnd.sqlite3"
+    ) .
 
-                SELECT $this ?description
-                WHERE {
-                    $this dct:title ?title .
-                    $this dct:description ?description .
-                    FILTER (CONTAINS(LCASE(STR(?description)), LCASE(STR(?title))))
-                }
-            """ ;
-        ] ;
-        sh:severity sh:Info ;
-    ] ;
-    sh:property [
-        sh:path dcat:distribution ;
-        sh:node schema:DistributionShape ;
-        sh:minCount 1 ;
-        sh:severity sh:Info ;
-    ] ;
-    sh:property [
-        sh:path dcat:keyword ;
-        sh:nodeKind sh:Literal ;
-        sh:minCount 1 ;
-        sh:severity sh:Info ;
-    ] ;
-    sh:property [
-        sh:path dct:subject ;
-        sh:or (
-            [
-                sh:nodeKind sh:BlankNode ;
-            ]
-            [
-                sh:nodeKind sh:IRI ;
-            ]
-            [
-                sh:nodeKind sh:Literal ;
-            ]
-        ) ;
-        sh:minCount 1 ;
-        sh:severity sh:Info ;
-    ] ;
-    sh:property [
-        sh:path dct:spatial ;
-        sh:nodeKind sh:BlankNodeOrIRI ;
-        sh:minCount 1 ;
-        sh:severity sh:Info ;
-    ] ;
-    sh:property [
-        sh:path dcat:contactPoint ;
-        sh:or (
-            [
-                sh:node schema:ContactPointOrganizationShape ;
-            ]
-            [
-                sh:node schema:ContactPointAgentShape ;
-            ]
-        ) ;
-        sh:nodeKind sh:BlankNodeOrIRI ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:severity sh:Info ;
-    ] .
+schema:DistributionShape-mediaType
+    a sh:PropertyShape ;
+    sh:path [ sh:alternativePath ( dct:format dcat:mediaType  ) ] ;
+    sh:minCount 1 ;
+    sh:qualifiedValueShape schema:MediaTypeShape ;
+    sh:qualifiedMinCount 1 ;
+    sh:severity sh:Info .
 
-schema:DistributionShape
-    a sh:NodeShape ;
-    sh:targetClass dcat:Distribution ;
-    sh:property [
-        sh:path dcat:accessURL ;
-        sh:nodeKind sh:IRI ;
-        sh:minCount 1 ;
-        sh:severity sh:Info ;
-    ] ;
-    sh:property [
-        sh:path dcat:accessService ;
-        sh:node schema:DataServiceShape ;
-        sh:severity sh:Info ;
-    ] ;
-    sh:property [
-        sh:path dct:format ;
-        sh:minCount 1 ;
-        sh:qualifiedValueShape [
-            sh:nodeKind sh:Literal ;
-            sh:datatype xsd:string ;
-            sh:in (
-                "text/csv"
-                "application/gml+xml"
-                "text/html"
-                "application/json"
-                "application/javascript"
-                "application/vnd.geo+json"
-                "application/vnd.google-earth.kml+xml"
-                "application/vnd.oasis.opendocument.spreadsheet"
-                "application/rdf+xml"
-                "text/xml"
-                "application/x-­ogc-sosi"
-                "image/tiff"
-                "text/tab-separated-values"
-                "text/plain"
-                "application/x.wfs"
-                "application/x.wms"
-                "application/vnd.sealed-xls"
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                "application/xml"
-                "application/x.yaml"
-                "application/octet-stream"
-                "application/ld+json"
-                "text/turtle"
-                "application/n-triples"
-                "application/gpx+xml"
-                "application/x.siri"
-                "application/x.gtfs"
-                "application/x.gtfsrt"
-                "application/x.netex"
-                "application/x.ualf"
-                "application/zip"
-                "application/pdf"
-                "application/sql"
-                "application/geopackage+sqlite3"
-                "application/vnd.sqlite3"
-            ) ;
-        ] ;
-        sh:qualifiedMinCount 1 ;
-        sh:severity sh:Info ;
-    ] ;
-    sh:property [
-        sh:path dct:license ;
-        sh:or (
-            [
-              sh:nodeKind sh:BlankNode ;
-              sh:node schema:LicenseDocumentShape ;
-            ]
-            [
-              sh:nodeKind sh:IRI ;
-            ]        ) ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:severity sh:Info ;
-    ] .
-
-schema:DataServiceShape
-    a sh:NodeShape ;
-    sh:targetClass dcat:DataService ;
-    sh:property [
-        sh:path dcat:endpointURL ;
-        sh:nodeKind sh:IRI ;
-        sh:minCount 1 ;
-        sh:severity sh:Info ;
-    ] .
+schema:LicenseDocumentShape-source
+    a sh:PropertyShape ;
+    sh:path dct:source ;
+    sh:nodeKind sh:IRIOrLiteral ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:severity sh:Info .
 
 schema:LicenseDocumentShape
     a sh:NodeShape ;
     sh:targetClass dct:LicenseDocument ;
-    sh:property [
-        sh:path dct:source ;
-        sh:nodeKind sh:IRIOrLiteral ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:severity sh:Info ;
-    ] .
+    sh:targetObjectsOf dct:license ;
+    sh:property schema:LicenseDocumentShape-source .
+
+schema:DistributionShape-license
+    a sh:PropertyShape ;
+    sh:path dct:license ;
+    sh:or (
+        [
+            sh:nodeKind sh:BlankNode ;
+            sh:node schema:LicenseDocumentShape ;
+        ]
+        [
+            sh:nodeKind sh:IRI ;
+        ]
+    ) ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:severity sh:Info .
+
+schema:DistributionShape
+    a sh:NodeShape ;
+    sh:targetClass dcat:Distribution ;
+    sh:targetObjectsOf dcat:distribution ;
+    sh:property schema:DistributionShape-accessURL ;
+    sh:property schema:DistributionShape-mediaType ;
+    sh:property schema:DistributionShape-license .
+
+schema:DatasetShape-distribution
+    a sh:PropertyShape ;
+    sh:path dcat:distribution ;
+    sh:node schema:DistributionShape ;
+    sh:minCount 1 ;
+    sh:severity sh:Info .
+
+schema:DatasetShape-keyword
+    a sh:PropertyShape ;
+    sh:path dcat:keyword ;
+    sh:nodeKind sh:Literal ;
+    sh:minCount 1 ;
+    sh:severity sh:Info .
+
+schema:DatasetShape-subject
+    a sh:PropertyShape ;
+    sh:path dct:subject ;
+    sh:or (
+        [
+            sh:nodeKind sh:BlankNode ;
+        ]
+        [
+            sh:nodeKind sh:IRI ;
+        ]
+        [
+            sh:nodeKind sh:Literal ;
+        ]
+    ) ;
+    sh:minCount 1 ;
+    sh:severity sh:Info .
+
+schema:DatasetShape-spatial
+    a sh:PropertyShape ;
+    sh:path dct:spatial ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:minCount 1 ;
+    sh:severity sh:Info .
 
 schema:ContactPointShape-organization-name
     a sh:PropertyShape ;
     sh:path vcard:organization-name ;
     sh:nodeKind sh:Literal ;
-    sh:minCount 1 ;
-    sh:maxCount 1 ;
     sh:severity sh:Info .
 
 schema:ContactPointShape-organization-unit
     a sh:PropertyShape ;
     sh:path vcard:organization-unit ;
     sh:nodeKind sh:Literal ;
-    sh:minCount 1 ;
-    sh:maxCount 1 ;
     sh:severity sh:Info .
 
-schema:ContactPointShape-organizationUnit
+schema:ContactPointShape-hasOrganizationName
     a sh:PropertyShape ;
-    sh:path vcard:organizationUnit ;
+    sh:path vcard:hasOrganizationName ;
     sh:nodeKind sh:Literal ;
-    sh:minCount 1 ;
-    sh:maxCount 1 ;
+    sh:severity sh:Info .
+
+schema:ContactPointShape-hasOrganizationUnit
+    a sh:PropertyShape ;
+    sh:path vcard:hasOrganizationUnit ;
+    sh:nodeKind sh:Literal ;
     sh:severity sh:Info .
 
 schema:ContactPointShape-hasURL
     a sh:PropertyShape ;
     sh:path vcard:hasURL ;
     sh:nodeKind sh:IRI ;
-    sh:minCount 1 ;
-    sh:maxCount 1 ;
     sh:severity sh:Info .
 
 schema:ContactPointShape-hasEmail
     a sh:PropertyShape ;
     sh:path vcard:hasEmail ;
     sh:nodeKind sh:IRI ;
-    sh:minCount 1 ;
-    sh:maxCount 1 ;
     sh:severity sh:Info .
 
 schema:ContactPointShape-hasTelephone
     a sh:PropertyShape ;
     sh:path vcard:hasTelephone ;
     sh:nodeKind sh:IRI ;
+    sh:severity sh:Info .
+
+schema:ContactPointShape
+    a sh:NodeShape ;
+    sh:targetObjectsOf dcat:contactPoint ;
+    sh:or (
+        [
+            sh:class vcard:Organization ;
+        ]
+        [
+            sh:class foaf:Agent ;
+        ]
+    ) ;
+    sh:property schema:ContactPointShape-organization-name ;
+    sh:property schema:ContactPointShape-organization-unit ;
+    sh:property schema:ContactPointShape-hasOrganizationName ;
+    sh:property schema:ContactPointShape-hasOrganizationUnit ;
+    sh:property schema:ContactPointShape-hasURL ;
+    sh:property schema:ContactPointShape-hasEmail ;
+    sh:property schema:ContactPointShape-hasTelephone ;
+    sh:sparql [
+        sh:message "Contact point must not be empty" ;
+        sh:select """
+            PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
+
+            SELECT $this ?value
+            WHERE {
+                FILTER NOT EXISTS { $this vcard:organization-name|vcard:organization-unit|vcard:hasOrganizationName|vcard:hasOrganizationUnit|vcard:hasURL|vcard:hasEmail|vcard:hasTelephone ?value }
+            }
+        """ ;
+    ] .
+
+schema:DatasetShape-contactPoint
+    a sh:PropertyShape ;
+    sh:path dcat:contactPoint ;
+    sh:node schema:ContactPointShape ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
     sh:minCount 1 ;
     sh:maxCount 1 ;
     sh:severity sh:Info .
 
-schema:ContactPointOrganizationShape
+schema:DatasetShape
     a sh:NodeShape ;
-    sh:targetClass vcard:Organization ;
-    sh:or (
-        [
-            sh:property schema:ContactPointShape-organization-name ;
-        ]
-        [
-            sh:property schema:ContactPointShape-organization-unit ;
-        ]
-        [
-            sh:property schema:ContactPointShape-organizationUnit ;
-        ]
-        [
-            sh:property schema:ContactPointShape-hasURL ;
-        ]
-        [
-            sh:property schema:ContactPointShape-hasEmail ;
-        ]
-        [
-            sh:property schema:ContactPointShape-hasTelephone ;
-        ]
-    ) .
-
-schema:ContactPointAgentShape
-    a sh:NodeShape ;
-    sh:targetClass foaf:Agent ;
-    sh:or (
-        [
-            sh:property schema:ContactPointShape-organization-name ;
-        ]
-        [
-            sh:property schema:ContactPointShape-organization-unit ;
-        ]
-        [
-            sh:property schema:ContactPointShape-organizationUnit ;
-        ]
-        [
-            sh:property schema:ContactPointShape-hasURL ;
-        ]
-        [
-            sh:property schema:ContactPointShape-hasEmail ;
-        ]
-        [
-            sh:property schema:ContactPointShape-hasTelephone ;
-        ]
-    ) .
+    sh:targetClass dcat:Dataset ;
+    sh:property schema:DatasetShape-title ;
+    sh:property schema:DatasetShape-description ;
+    sh:property schema:DatasetShape-distribution ;
+    sh:property schema:DatasetShape-keyword ;
+    sh:property schema:DatasetShape-subject ;
+    sh:property schema:DatasetShape-spatial ;
+    sh:property schema:DatasetShape-contactPoint .

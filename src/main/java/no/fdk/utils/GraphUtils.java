@@ -1,5 +1,7 @@
 package no.fdk.utils;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
@@ -9,10 +11,8 @@ import org.apache.jena.sparql.graph.GraphFactory;
 import java.io.StringReader;
 import java.io.StringWriter;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class GraphUtils {
-
-    private GraphUtils() {
-    }
 
     public static Graph stringToGraph(String string, Lang language) {
         Graph graph = GraphFactory.createDefaultGraph();
