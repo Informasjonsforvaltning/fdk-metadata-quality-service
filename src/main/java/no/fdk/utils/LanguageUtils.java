@@ -5,6 +5,9 @@ import org.apache.jena.riot.Lang;
 
 public class LanguageUtils {
 
+    private LanguageUtils() {
+    }
+
     public static Lang mediaTypeToRdfLanguage(String mediaType) {
         if (StringUtils.containsIgnoreCase(mediaType, "text/turtle")) {
             return Lang.TURTLE;

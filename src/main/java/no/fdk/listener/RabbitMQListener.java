@@ -39,13 +39,11 @@ public class RabbitMQListener {
             .retrieve()
             .bodyToMono(String.class)
             .flatMap(body -> Mono.just(GraphUtils.stringToGraph(body, Lang.TURTLE)))
-            .doOnSuccess(graph -> {
-                assessmentService
-                    .upsertAssessments(assessmentService.assess(graph, EntityType.dataset))
-                    .count()
-                    .doOnSuccess(count -> log.info("Finished creating {} assessments", count))
-                    .subscribe();
-            })
+            .doOnSuccess(graph -> assessmentService
+                .upsertAssessments(assessmentService.assess(graph, EntityType.dataset))
+                .count()
+                .doOnSuccess(count -> log.info("Finished creating {} assessments", count))
+                .subscribe())
             .doOnError(Throwable::printStackTrace)
             .subscribe();
     }
