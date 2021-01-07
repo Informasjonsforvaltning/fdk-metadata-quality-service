@@ -347,7 +347,6 @@ public class AssessmentUtils {
 
     private static boolean isReportEntryRelatedToEntityResource(ReportEntry entry, Entity entity, Resource entityResource) {
         return entry.focusNode().hasURI(entity.getUri())
-            || entityResource.hasURI(entity.getUri())
             || entityResource.listProperties().toList().stream().map(Statement::getObject).map(RDFNode::asNode).anyMatch(node -> node.equals(entry.focusNode()));
     }
 
