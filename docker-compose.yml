@@ -7,15 +7,22 @@ services:
       - 8080:8080
     environment:
       - LOG_LEVEL=DEBUG
-      - MONGO_HOST=localhost
+      - MONGO_HOST=db
       - MONGO_PORT=27017
       - MONGO_USERNAME=admin
       - MONGO_PASSWORD=admin
-      - RABBIT_HOST=localhost
+      - RABBIT_HOST=rabbitmq
       - RABBIT_PORT=5672
       - RABBIT_USERNAME=guest
       - RABBIT_PASSWORD=guest
       - DATASET_HARVESTER_BASE_URI=https://datasets.staging.fellesdatakatalog.digdir.no
+    depends_on:
+      - db
+      - rabbitmq
+    networks:
+      fdk:
+        aliases:
+          - fdk-metadata-quality-service
   db:
     image: mongo
     ports:
@@ -23,8 +30,20 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=admin
+    networks:
+      fdk:
+        aliases:
+          - db
   rabbitmq:
     image: rabbitmq:management
     ports:
       - 5672:5672
       - 15672:15672
+    networks:
+      fdk:
+        aliases:
+          - rabbitmq
+
+networks:
+  fdk:
+    name: fdk
