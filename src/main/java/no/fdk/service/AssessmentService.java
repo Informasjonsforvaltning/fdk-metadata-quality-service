@@ -70,15 +70,13 @@ public class AssessmentService {
         return assessmentRepository.findAllByEntityUriIn(entityUris);
     }
 
-    public Flux<Assessment> upsertAssessments(Flux<Assessment> assessments) {
-        return assessments
-            .flatMap(assessment -> reactiveFluentMongoOperations
-                .update(Assessment.class)
-                .matching(Criteria.where(UNDERSCORE_ID).is(assessment.getId()))
-                .replaceWith(assessment)
-                .withOptions(FindAndReplaceOptions.options().returnNew().upsert())
-                .findAndReplace()
-            );
+    public void upsertAssessment(Assessment assessment) {
+        reactiveFluentMongoOperations
+            .update(Assessment.class)
+            .matching(Criteria.where(UNDERSCORE_ID).is(assessment.getId()))
+            .replaceWith(assessment)
+            .withOptions(FindAndReplaceOptions.options().returnNew().upsert())
+            .findAndReplace();
     }
 
 }

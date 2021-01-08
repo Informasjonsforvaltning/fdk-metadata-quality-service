@@ -17,6 +17,7 @@ import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.VCARD4;
 import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -427,23 +428,25 @@ public class AssessmentUtils {
     private static Flux<Triple<Entity, Resource, Collection<ReportEntry>>> extractDatasetEntitiesFromModel(Model model, ValidationReport report) {
         Collection<ReportEntry> entries = report.getEntries();
 
-        return Flux.fromIterable(model.listResourcesWithProperty(RDF.type, DCAT.Dataset).toList())
-            .map(resource -> {
-                    Entity entity = Entity.builder()
-                        .uri(resource.getURI())
-                        .type(EntityType.dataset)
-                        .catalog(extractCatalogFromModel(model, resource))
-                        .build();
+        return Flux.defer(() ->
+            Flux.fromIterable(model.listResourcesWithProperty(RDF.type, DCAT.Dataset).toList())
+                .map(resource -> {
+                        Entity entity = Entity.builder()
+                            .uri(resource.getURI())
+                            .type(EntityType.dataset)
+                            .catalog(extractCatalogFromModel(model, resource))
+                            .build();
 
-                    Collection<ReportEntry> relatedReportEntries = entries
-                        .parallelStream()
-                        .filter(entry -> isReportEntryRelatedToEntityResource(entry, entity, resource))
-                        .collect(Collectors.toList());
+                        Collection<ReportEntry> relatedReportEntries = entries
+                            .parallelStream()
+                            .filter(entry -> isReportEntryRelatedToEntityResource(entry, entity, resource))
+                            .collect(Collectors.toList());
 
-                    return Triple.of(entity, resource, relatedReportEntries);
-                }
-            )
-            .doOnNext(triple -> entries.removeIf(entry -> triple.getRight().contains(entry)));
+                        return Triple.of(entity, resource, relatedReportEntries);
+                    }
+                )
+                .doOnNext(triple -> entries.removeIf(entry -> triple.getRight().contains(entry))))
+            .subscribeOn(Schedulers.elastic());
     }
 
 }
