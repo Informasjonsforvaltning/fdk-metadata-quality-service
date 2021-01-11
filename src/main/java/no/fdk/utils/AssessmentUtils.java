@@ -444,8 +444,7 @@ public class AssessmentUtils {
 
                         return Triple.of(entity, resource, relatedReportEntries);
                     }
-                )
-                .doOnNext(triple -> entries.removeIf(entry -> triple.getRight().contains(entry))))
+                ))
             .subscribeOn(Schedulers.elastic());
     }
 
