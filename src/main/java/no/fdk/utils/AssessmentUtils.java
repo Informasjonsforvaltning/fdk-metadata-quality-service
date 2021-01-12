@@ -135,6 +135,27 @@ public class AssessmentUtils {
                 || path.equalTo(hasTelephonePath, null));
     }
 
+    private static boolean hasFormatOrMediaType(Resource resource) {
+        return resource.hasProperty(DCTerms.format) || resource.hasProperty(DCAT.mediaType);
+    }
+
+    private static boolean hasLicense(Resource resource) {
+        return resource.hasProperty(DCTerms.license);
+    }
+
+    private static boolean hasAccessServiceEndpointUrl(Resource resource) {
+        return resource
+            .listProperties(DCAT.accessService)
+            .toList()
+            .stream()
+            .map(Statement::getResource)
+            .anyMatch(r -> r.hasProperty(DCAT.endpointURL));
+    }
+
+    private static boolean hasAccessUrlOrAccessServiceEndpointUrl(Resource resource) {
+        return resource.hasProperty(DCAT.accessURL) || hasAccessServiceEndpointUrl(resource);
+    }
+
     private static String extractPublisherIdFromCatalogResource(Resource catalogResource) {
         Resource publisherResource = catalogResource != null ? catalogResource.getPropertyResourceValue(DCTerms.publisher) : null;
 
@@ -388,10 +409,30 @@ public class AssessmentUtils {
             }
         }
 
-        if (isDistributionPath(path) && !entityResource.hasProperty(DCAT.distribution)) {
-            violations.add(IndicatorType.distributableData);
-            violations.add(IndicatorType.controlledVocabularyUsage);
-            violations.add(IndicatorType.licenseInformation);
+        if (isDistributionPath(path)) {
+            if (!entityResource.hasProperty(DCAT.distribution)) {
+                violations.add(IndicatorType.distributableData);
+                violations.add(IndicatorType.controlledVocabularyUsage);
+                violations.add(IndicatorType.licenseInformation);
+            } else {
+                Collection<Resource> distributions = entityResource
+                    .listProperties(DCAT.distribution)
+                    .toList().stream()
+                    .map(Statement::getResource)
+                    .collect(Collectors.toList());
+
+                if (distributions.stream().noneMatch(AssessmentUtils::hasFormatOrMediaType)) {
+                    violations.add(IndicatorType.controlledVocabularyUsage);
+                }
+
+                if (distributions.stream().noneMatch(AssessmentUtils::hasLicense)) {
+                    violations.add(IndicatorType.licenseInformation);
+                }
+
+                if (distributions.stream().noneMatch(AssessmentUtils::hasAccessUrlOrAccessServiceEndpointUrl)) {
+                    violations.add(IndicatorType.distributableData);
+                }
+            }
         }
 
         if (isAccessUrlOrAccessServiceEndpointUrlPath(path)) {
