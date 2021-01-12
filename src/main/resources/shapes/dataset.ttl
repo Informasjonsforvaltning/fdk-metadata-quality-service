@@ -83,7 +83,7 @@ schema:MediaTypeShape
         "application/vnd.oasis.opendocument.spreadsheet"
         "application/rdf+xml"
         "text/xml"
-        "application/x-­ogc-sosi"
+        "application/x-ogc-sosi"
         "image/tiff"
         "text/tab-separated-values"
         "text/plain"
@@ -164,7 +164,7 @@ schema:LicenseDocumentShape-source
 
 schema:LicenseDocumentShape
     a sh:NodeShape ;
-    sh:targetClass dct:LicenseDocument ;
+    sh:class dct:LicenseDocument ;
     sh:targetObjectsOf dct:license ;
     sh:property schema:LicenseDocumentShape-source .
 
@@ -186,8 +186,7 @@ schema:DistributionShape-license
 
 schema:DistributionShape
     a sh:NodeShape ;
-    sh:targetClass dcat:Distribution ;
-    sh:targetObjectsOf dcat:distribution ;
+    sh:class dcat:Distribution ;
     sh:property schema:DistributionShape-accessURL ;
     sh:property schema:DistributionShape-mediaType ;
     sh:property schema:DistributionShape-license .
@@ -195,8 +194,8 @@ schema:DistributionShape
 schema:DatasetShape-distribution
     a sh:PropertyShape ;
     sh:path dcat:distribution ;
-    sh:node schema:DistributionShape ;
-    sh:minCount 1 ;
+    sh:qualifiedValueShape schema:DistributionShape ;
+    sh:qualifiedMinCount 1 ;
     sh:severity sh:Info .
 
 schema:DatasetShape-keyword

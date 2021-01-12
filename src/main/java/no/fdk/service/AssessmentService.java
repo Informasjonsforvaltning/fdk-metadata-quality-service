@@ -76,7 +76,9 @@ public class AssessmentService {
             .matching(Criteria.where(UNDERSCORE_ID).is(assessment.getId()))
             .replaceWith(assessment)
             .withOptions(FindAndReplaceOptions.options().returnNew().upsert())
-            .findAndReplace();
+            .findAndReplace()
+            .doOnError(Throwable::printStackTrace)
+            .subscribe();
     }
 
 }
