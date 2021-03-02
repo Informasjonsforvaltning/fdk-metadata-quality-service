@@ -70,7 +70,6 @@ schema:MediaTypeShape
     a sh:NodeShape ;
     sh:nodeKind sh:Literal ;
     sh:datatype xsd:string ;
-    sh:targetObjectsOf dct:format , dcat:mediaType ;
     sh:message "Property must be a valid media type" ;
     sh:in (
         "text/csv"
@@ -119,7 +118,7 @@ schema:MediaTypeShape
         "https://www.iana.org/assignments/media-types/application/vnd.oasis.opendocument.spreadsheet"
         "https://www.iana.org/assignments/media-types/application/rdf+xml"
         "https://www.iana.org/assignments/media-types/text/xml"
-        "https://www.iana.org/assignments/media-types/application/x-­ogc-sosi"
+        "https://www.iana.org/assignments/media-types/application/x-ogc-sosi"
         "https://www.iana.org/assignments/media-types/image/tiff"
         "https://www.iana.org/assignments/media-types/text/tab-separated-values"
         "https://www.iana.org/assignments/media-types/text/plain"
@@ -149,6 +148,7 @@ schema:MediaTypeShape
 schema:DistributionShape-mediaType
     a sh:PropertyShape ;
     sh:path [ sh:alternativePath ( dct:format dcat:mediaType  ) ] ;
+    sh:targetObjectsOf dct:format , dcat:mediaType ;
     sh:minCount 1 ;
     sh:qualifiedValueShape schema:MediaTypeShape ;
     sh:qualifiedMinCount 1 ;
@@ -187,6 +187,7 @@ schema:DistributionShape-license
 schema:DistributionShape
     a sh:NodeShape ;
     sh:class dcat:Distribution ;
+    sh:targetObjectsOf dcat:distribution ;
     sh:property schema:DistributionShape-accessURL ;
     sh:property schema:DistributionShape-mediaType ;
     sh:property schema:DistributionShape-license .
