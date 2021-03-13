@@ -1,6 +1,7 @@
 package no.fdk.validation;
 
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.compose.MultiUnion;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -21,12 +22,8 @@ public abstract class EntityValidator implements Validator {
 
     @Override
     public ValidationReport validate(Graph graph) {
-        Graph shapesGraph = RDFDataMgr.loadGraph(getShapesPath());
-
         Model model = ModelFactory.createModelForGraph(graph);
-        Model shapesModel = ModelFactory.createModelForGraph(shapesGraph);
-
-        Resource report = ValidationUtil.validateModel(model, shapesModel, true);
+        Resource report = ValidationUtil.validateModel(model, getShapesModel(), true);
 
         return ValidationReport.fromModel(report.getModel());
     }
@@ -34,5 +31,17 @@ public abstract class EntityValidator implements Validator {
     protected abstract Resource getResource();
 
     protected abstract String getShapesPath();
+
+    private Model getShapesModel() {
+        Graph constraintShapesGraph = RDFDataMgr.loadGraph("shapes/constraints.ttl");
+        Graph entityShapesGraph = RDFDataMgr.loadGraph(getShapesPath());
+
+        Graph[] graphs = new Graph[]{
+            constraintShapesGraph,
+            entityShapesGraph
+        };
+
+        return ModelFactory.createModelForGraph(new MultiUnion(graphs));
+    }
 
 }
