@@ -1,0 +1,52 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix fdk: <http://data.norge.no/fdk#> .
+
+fdk:
+    a owl:Ontology ;
+    rdfs:label "FDK shapes library"@en ;
+    rdfs:comment "FDK defines custom SPARQL-based validators for internal used"@en ;
+    owl:imports sh: ;
+    sh:declare [
+        sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ;
+        sh:prefix "rdf" ;
+    ] .
+
+fdk:HasValueInConstraintComponent
+    a sh:ConstraintComponent ;
+    rdfs:label "Has value in SHACL list constraint component"@en ;
+    rdfs:comment "A constraint component that can be used to verify that at least one value node must be a member of a provided SHACL list."@en ;
+    sh:parameter fdk:HasValueInConstraintComponent-hasValueIn ;
+    sh:message "At least one of the value nodes must be a member of list {$hasValueIn}" ;
+    sh:propertyValidator [
+          a sh:SPARQLSelectValidator ;
+          sh:prefixes fdk: ;
+          sh:select """
+            SELECT $this
+            WHERE {
+                FILTER NOT EXISTS {
+                    $this $PATH ?value .
+                    GRAPH $shapesGraph {
+                        $hasValueIn (rdf:rest*)/rdf:first ?value
+                    }
+                }
+            }
+        """ ;
+      ];
+    rdfs:isDefinedBy fdk: .
+
+fdk:HasValueInConstraintComponent-hasValueIn
+    a sh:Parameter ;
+    sh:path fdk:hasValueIn ;
+    sh:maxCount 1 ;
+    rdfs:isDefinedBy fdk: .
+
+fdk:hasValueIn
+    a rdf:Property ;
+    rdfs:label "has value in"@en ;
+    rdfs:comment "Specifies a list of allowed values so that at least one value node must be among the members of the given list."@en ;
+    rdfs:range rdf:List ;
+    rdfs:isDefinedBy fdk: .

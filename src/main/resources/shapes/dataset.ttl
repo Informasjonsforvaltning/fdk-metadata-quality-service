@@ -5,6 +5,7 @@
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix fdk: <http://data.norge.no/fdk#> .
 
 schema:DatasetShape-title
     a sh:PropertyShape ;
@@ -66,12 +67,14 @@ schema:DistributionShape-accessService
     sh:node schema:DataServiceShape ;
     sh:severity sh:Info .
 
-schema:MediaTypeShape
-    a sh:NodeShape ;
+schema:DistributionShape-mediaType
+    a sh:PropertyShape ;
+    sh:path [ sh:alternativePath ( dct:format dcat:mediaType  ) ] ;
+    sh:minCount 1 ;
     sh:nodeKind sh:Literal ;
     sh:datatype xsd:string ;
     sh:message "Property must be a valid media type" ;
-    sh:in (
+    fdk:hasValueIn (
         "text/csv"
         "application/gml+xml"
         "text/html"
@@ -143,15 +146,7 @@ schema:MediaTypeShape
         "https://www.iana.org/assignments/media-types/application/sql"
         "https://www.iana.org/assignments/media-types/application/geopackage+sqlite3"
         "https://www.iana.org/assignments/media-types/application/vnd.sqlite3"
-    ) .
-
-schema:DistributionShape-mediaType
-    a sh:PropertyShape ;
-    sh:path [ sh:alternativePath ( dct:format dcat:mediaType  ) ] ;
-    sh:targetObjectsOf dct:format , dcat:mediaType ;
-    sh:minCount 1 ;
-    sh:qualifiedValueShape schema:MediaTypeShape ;
-    sh:qualifiedMinCount 1 ;
+    ) ;
     sh:severity sh:Info .
 
 schema:LicenseDocumentShape-source
