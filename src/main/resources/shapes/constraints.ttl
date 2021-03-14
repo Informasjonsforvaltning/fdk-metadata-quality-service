@@ -50,3 +50,9 @@ fdk:hasValueIn
     rdfs:comment "Specifies a list of allowed values so that at least one value node must be among the members of the given list."@en ;
     rdfs:range rdf:List ;
     rdfs:isDefinedBy fdk: .
+
+fdk:MediaTypes
+    a rdf:List ;
+    rdfs:label "An RDF list of media types"@en ;
+    rdfs:comment "Specifies a list of media types used in FDK."@en ;
+    rdfs:isDefinedBy fdk: .
