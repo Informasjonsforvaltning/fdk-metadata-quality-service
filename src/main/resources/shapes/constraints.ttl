@@ -8,7 +8,7 @@
 fdk:
     a owl:Ontology ;
     rdfs:label "FDK shapes library"@en ;
-    rdfs:comment "FDK defines custom SPARQL-based validators for internal used"@en ;
+    rdfs:comment "Custom SPARQL-based validators for internal use"@en ;
     owl:imports sh: ;
     sh:declare [
         sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ;
