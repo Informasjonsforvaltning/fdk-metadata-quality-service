@@ -9,13 +9,13 @@ import org.apache.jena.riot.Lang;
 public class LanguageUtils {
 
     public static Lang mediaTypeToRdfLanguage(String mediaType) {
-        if (StringUtils.containsIgnoreCase(mediaType, "text/turtle")) {
+        if (StringUtils.containsIgnoreCase(mediaType, Lang.TURTLE.getHeaderString())) {
             return Lang.TURTLE;
-        } else if (StringUtils.containsIgnoreCase(mediaType, "application/rdf+json")) {
+        } else if (StringUtils.containsIgnoreCase(mediaType, Lang.RDFJSON.getHeaderString())) {
             return Lang.RDFJSON;
-        } else if (StringUtils.containsIgnoreCase(mediaType, "application/ld+json")) {
+        } else if (StringUtils.containsIgnoreCase(mediaType, Lang.JSONLD.getHeaderString())) {
             return Lang.JSONLD;
-        } else if (StringUtils.containsIgnoreCase(mediaType, "application/rdf+xml")) {
+        } else if (StringUtils.containsIgnoreCase(mediaType, Lang.RDFXML.getHeaderString())) {
             return Lang.RDFXML;
         }
 
