@@ -33,7 +33,8 @@ public class AssessmentService {
     private final ReactiveFluentMongoOperations reactiveFluentMongoOperations;
 
     public Flux<Assessment> assess(Graph graph, EntityType entityType) {
-        return AssessmentUtils.extractEntityResourcePairsFromGraph(graph, entityType, validationService.validate(graph))
+        return validationService.validate(graph)
+            .flatMapMany(report -> AssessmentUtils.extractEntityResourcePairsFromGraph(graph, entityType, report))
             .map(AssessmentUtils::generateAssessmentForEntity);
     }
 

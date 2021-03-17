@@ -29,9 +29,9 @@ public class ValidationController {
 
         Graph bodyGraph = GraphUtils.stringToGraph(body, requestBodyLang);
 
-        ValidationReport report = validationService.validate(bodyGraph);
-
-        return Mono.just(GraphUtils.graphToString(report.getGraph(), responseBodyLang));
+        return validationService.validate(bodyGraph)
+            .map(ValidationReport::getGraph)
+            .map(graph -> GraphUtils.graphToString(graph, responseBodyLang));
     }
 
 }

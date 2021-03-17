@@ -43,16 +43,14 @@ public class IANAMediaTypeService {
         AtomicInteger count = new AtomicInteger();
 
         return registries
-            .map(this::harvestMediaTypeRegistry)
-            .flatMapIterable(Flux::toIterable)
+            .flatMap(this::harvestMediaTypeRegistry)
             .doOnNext(mediaType -> count.getAndIncrement())
             .doFinally(signal -> log.info("Successfully harvested {} IANA media types", count.get()));
     }
 
     private Flux<MediaType> harvestMediaTypeRegistry(String registry) {
         return Mono.justOrEmpty(createRegistryUrl(registry))
-            .map(this::extractMediaTypeRegistryRecords)
-            .flatMapIterable(Flux::toIterable)
+            .flatMapMany(this::extractMediaTypeRegistryRecords)
             .map(code -> MediaType.builder().uri(format("%s/%s", BASE_URI, code)).code(code).build());
     }
 

@@ -6,6 +6,7 @@ import no.fdk.validation.DatasetValidator;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.shacl.ValidationReport;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
@@ -13,12 +14,11 @@ public class ValidationService {
 
     private final DatasetValidator datasetValidator;
 
-    public ValidationReport validate(Graph graph) {
-        if (datasetValidator.supports(graph)) {
-            return datasetValidator.validate(graph);
-        }
-
-        throw new UnprocessableEntityException("Could not validate data graph");
+    public Mono<ValidationReport> validate(Graph graph) {
+        return Mono.justOrEmpty(graph)
+            .filter(datasetValidator::supports)
+            .flatMap(datasetValidator::validate)
+            .switchIfEmpty(Mono.error(new UnprocessableEntityException("Could not validate data graph")));
     }
 
 }
