@@ -19,6 +19,7 @@ import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDF;
 import org.topbraid.shacl.validation.ValidationUtil;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -37,40 +38,51 @@ public abstract class EntityValidator implements Validator {
     }
 
     @Override
-    public ValidationReport validate(Graph graph) {
-        Model model = ModelFactory.createModelForGraph(graph);
-        Resource report = ValidationUtil.validateModel(model, getShapesModel(), true);
-
-        return ValidationReport.fromModel(report.getModel());
+    public Mono<ValidationReport> validate(Graph graph) {
+        return Mono.just(ModelFactory.createModelForGraph(graph))
+            .zipWith(getShapesModel())
+            .map(tuple -> ValidationUtil.validateModel(tuple.getT1(), tuple.getT2(), true))
+            .map(Resource::getModel)
+            .map(ValidationReport::fromModel);
     }
 
     protected abstract Resource getResource();
 
     protected abstract String getShapesPath();
 
-    private Model getShapesModel() {
-        Graph constraintShapesGraph = RDFDataMgr.loadGraph("shapes/constraints.ttl");
-        Graph entityShapesGraph = RDFDataMgr.loadGraph(getShapesPath());
-        Graph mediaTypesGraph = getMediaTypesGraph();
-
-        Graph[] graphs = new Graph[]{
-            constraintShapesGraph,
-            entityShapesGraph,
-            mediaTypesGraph
-        };
-
-        return ModelFactory.createModelForGraph(new MultiUnion(graphs));
+    private Mono<Model> getShapesModel() {
+        return Flux.merge(
+            Mono.just(RDFDataMgr.loadGraph("shapes/constraints.ttl")),
+            Mono.just(RDFDataMgr.loadGraph(getShapesPath())),
+            getMediaTypesGraph()
+        )
+            .collectList()
+            .map(list -> list.toArray(Graph[]::new))
+            .map(MultiUnion::new)
+            .map(ModelFactory::createModelForGraph);
     }
 
-    private Graph getMediaTypesGraph() {
-        Model model = ModelFactory
-            .createDefaultModel()
-            .setNsPrefixes(PrefixMapping.Standard)
-            .setNsPrefix(FDK.PREFIX, FDK.NS);
+    private Mono<Graph> getMediaTypesGraph() {
+        return Mono.just(ModelFactory.createDefaultModel())
+            .map(model -> model.setNsPrefixes(PrefixMapping.Standard))
+            .map(model -> model.setNsPrefix(FDK.PREFIX, FDK.NS))
+            .zipWith(getMediaTypeNodes())
+            .map(tuple -> {
+                Resource list = tuple.getT1().createList(tuple.getT2())
+                    .asResource()
+                    .addProperty(RDF.type, RDF.List);
 
-        var rdfNodes = mediaTypeService
+                ResourceUtils.renameResource(list, FDK.uri("MediaTypes"));
+
+                return tuple.getT1();
+            })
+            .map(Model::getGraph);
+    }
+
+    private Mono<RDFNode[]> getMediaTypeNodes() {
+        return mediaTypeService
             .getMediaTypes()
-            .map(mediaType -> {
+            .flatMapIterable(mediaType -> {
                 Set<Node> nodes = new HashSet<>();
 
                 if (mediaType.getCode() != null) {
@@ -81,20 +93,11 @@ public abstract class EntityValidator implements Validator {
                     nodes.add(NodeFactory.createURI(mediaType.getUri()));
                 }
 
-                return Flux.fromIterable(nodes);
+                return nodes;
             })
-            .flatMapIterable(Flux::toIterable)
             .map(ModelUtils::convertGraphNodeToRDFNode)
-            .toStream()
-            .toArray(RDFNode[]::new);
-
-        Resource list = model.createList(rdfNodes)
-            .asResource()
-            .addProperty(RDF.type, RDF.List);
-
-        ResourceUtils.renameResource(list, FDK.uri("MediaTypes"));
-
-        return model.getGraph();
+            .collectList()
+            .map(list -> list.toArray(RDFNode[]::new));
     }
 
 }
