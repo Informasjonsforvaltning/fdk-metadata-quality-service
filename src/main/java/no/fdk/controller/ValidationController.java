@@ -7,6 +7,7 @@ import no.fdk.utils.LanguageUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.shacl.ValidationReport;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -19,8 +20,8 @@ public class ValidationController {
 
     @PostMapping
     public Mono<String> validateGraph(
-        @RequestHeader("content-type") String contentType,
-        @RequestHeader("accept") String accept,
+        @RequestHeader(HttpHeaders.CONTENT_TYPE) String contentType,
+        @RequestHeader(HttpHeaders.ACCEPT) String accept,
         @RequestBody String body
     ) {
         Lang requestBodyLang = LanguageUtils.mediaTypeToRdfLanguage(contentType);

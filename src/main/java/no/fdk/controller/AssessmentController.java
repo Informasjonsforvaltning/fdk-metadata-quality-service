@@ -9,6 +9,7 @@ import no.fdk.utils.GraphUtils;
 import no.fdk.utils.LanguageUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.riot.Lang;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -25,7 +26,7 @@ public class AssessmentController {
 
     @PostMapping
     public Flux<Assessment> assessGraphNodes(
-        @RequestHeader("content-type") String contentType,
+        @RequestHeader(HttpHeaders.CONTENT_TYPE) String contentType,
         @RequestParam EntityType entityType,
         @RequestBody String body
     ) {
