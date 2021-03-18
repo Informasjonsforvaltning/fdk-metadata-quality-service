@@ -14,4 +14,4 @@ RUN addgroup --gid 1001 --system app && \
   chmod 770 /app
 USER app:app
 COPY --chown=app:app --from=build /app/target/app.jar ./
-CMD java -jar app.jar
+CMD java -jar app.jar -Xss10m
