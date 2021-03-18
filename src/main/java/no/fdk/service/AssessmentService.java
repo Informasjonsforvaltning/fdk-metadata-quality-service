@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Set;
 
@@ -35,6 +36,7 @@ public class AssessmentService {
     public Flux<Assessment> assess(Graph graph, EntityType entityType) {
         return validationService.validate(graph)
             .flatMapMany(report -> AssessmentUtils.extractEntityResourcePairsFromGraph(graph, entityType, report))
+            .delayElements(Duration.ofMillis(30))
             .map(AssessmentUtils::generateAssessmentForEntity);
     }
 
