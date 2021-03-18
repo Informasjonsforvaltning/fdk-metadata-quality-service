@@ -34,10 +34,14 @@ public class AssessmentService {
     private final ReactiveFluentMongoOperations reactiveFluentMongoOperations;
 
     public Flux<Assessment> assess(Graph graph, EntityType entityType) {
+        log.info("Starting validation of data graph for entity type: {}", entityType);
+
         return validationService.validate(graph)
+            .doOnNext(report -> log.info("Successfully created validation report for entity type: {}", entityType))
             .flatMapMany(report -> AssessmentUtils.extractEntityResourcePairsFromGraph(graph, entityType, report))
             .delayElements(Duration.ofMillis(30))
-            .map(AssessmentUtils::generateAssessmentForEntity);
+            .map(AssessmentUtils::generateAssessmentForEntity)
+            .doOnComplete(() -> log.info("Successfully created quality assessments for entity type: {}", entityType));
     }
 
     public Mono<Rating> getCatalogAssessmentRating(String catalogId, String catalogUri, EntityType entityType) {
