@@ -23,7 +23,9 @@ application:
 ---
 
 spring:
-  profiles: develop,test,unit-integration
+  config:
+    activate:
+      on-profile: develop,test,unit-integration
   data:
     mongodb:
       authentication-database: admin
