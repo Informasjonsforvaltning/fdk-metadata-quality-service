@@ -41,7 +41,7 @@ public class AssessmentController {
     public Mono<Rating> getCatalogAssessmentRating(
         @RequestParam(required = false) String catalogId,
         @RequestParam(required = false) String catalogUri,
-        @RequestParam EntityType entityType
+        @RequestParam String entityType
     ) {
         return assessmentService.getCatalogAssessmentRating(catalogId, catalogUri, entityType);
     }

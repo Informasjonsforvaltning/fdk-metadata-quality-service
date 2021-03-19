@@ -44,14 +44,14 @@ public class AssessmentService {
             .doOnComplete(() -> log.info("Successfully created quality assessments for entity type: {}", entityType));
     }
 
-    public Mono<Rating> getCatalogAssessmentRating(String catalogId, String catalogUri, EntityType entityType) {
+    public Mono<Rating> getCatalogAssessmentRating(String catalogId, String catalogUri, String entityType) {
         if (catalogId == null && catalogUri == null) {
             throw new BadRequestException("One of [catalogId, catalogUri] must be provided");
         }
 
         return (catalogId != null
-            ? assessmentRepository.findAllByEntityCatalogIdAndEntityType(catalogId, entityType)
-            : assessmentRepository.findAllByEntityCatalogUriAndEntityType(catalogUri, entityType))
+            ? assessmentRepository.findAllByEntityCatalogIdAndEntityType(catalogId, EntityType.valueOfLabel(entityType))
+            : assessmentRepository.findAllByEntityCatalogUriAndEntityType(catalogUri, EntityType.valueOfLabel(entityType)))
             .reduce(
                 Rating
                     .builder()
