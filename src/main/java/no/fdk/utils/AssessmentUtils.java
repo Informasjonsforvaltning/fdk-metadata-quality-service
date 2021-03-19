@@ -68,7 +68,7 @@ public class AssessmentUtils {
     public static Flux<Triple<Entity, Resource, Collection<ReportEntry>>> extractEntityResourcePairsFromGraph(Graph graph, EntityType entityType, ValidationReport report) {
         Model model = ModelFactory.createModelForGraph(graph);
 
-        if (entityType == EntityType.dataset) {
+        if (entityType == EntityType.DATASET) {
             return extractDatasetEntitiesFromModel(model, report);
         }
 
@@ -368,9 +368,23 @@ public class AssessmentUtils {
             }));
     }
 
+    private static boolean hasSameUri(ReportEntry entry, Entity entity) {
+        return entry.focusNode().hasURI(entity.getUri());
+    }
+
+    private static boolean isNodeRelatedToResource(Resource parent, Node child) {
+        return parent
+            .listProperties()
+            .toList()
+            .stream()
+            .map(Statement::getObject)
+            .filter(node -> !(node.isResource() && EntityType.resources().contains(node.asResource().getPropertyResourceValue(RDF.type))))
+            .map(RDFNode::asNode)
+            .anyMatch(node -> node.equals(child));
+    }
+
     private static boolean isReportEntryRelatedToEntityResource(ReportEntry entry, Entity entity, Resource entityResource) {
-        return entry.focusNode().hasURI(entity.getUri())
-            || entityResource.listProperties().toList().stream().map(Statement::getObject).map(RDFNode::asNode).anyMatch(node -> node.equals(entry.focusNode()));
+        return hasSameUri(entry, entity) || isNodeRelatedToResource(entityResource, entry.focusNode());
     }
 
     private static Collection<IndicatorType> findViolations(ReportEntry entry, Resource entityResource) {
@@ -475,7 +489,7 @@ public class AssessmentUtils {
                 .map(resource -> {
                         Entity entity = Entity.builder()
                             .uri(resource.getURI())
-                            .type(EntityType.dataset)
+                            .type(EntityType.DATASET)
                             .catalog(extractCatalogFromModel(model, resource))
                             .build();
 
