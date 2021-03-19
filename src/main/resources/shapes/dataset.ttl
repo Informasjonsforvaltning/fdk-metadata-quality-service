@@ -61,17 +61,10 @@ schema:DistributionShape-accessURL
     sh:minCount 1 ;
     sh:severity sh:Info .
 
-schema:DistributionShape-accessService
-    a sh:PropertyShape ;
-    sh:path dcat:accessService ;
-    sh:node schema:DataServiceShape ;
-    sh:severity sh:Info .
-
 schema:DistributionShape-mediaType
     a sh:PropertyShape ;
     sh:path [ sh:alternativePath ( dct:format dcat:mediaType  ) ] ;
     sh:minCount 1 ;
-    sh:message "Property must be a valid media type" ;
     sh:nodeKind sh:IRIOrLiteral ;
     fdk:hasValueIn fdk:MediaTypes ;
     sh:severity sh:Info .
