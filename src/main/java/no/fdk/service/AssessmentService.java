@@ -39,7 +39,7 @@ public class AssessmentService {
         return validationService.validate(graph)
             .doOnNext(report -> log.info("Successfully created validation report for entity type: {}", entityType))
             .flatMapMany(report -> AssessmentUtils.extractEntityResourcePairsFromGraph(graph, entityType, report))
-            .delayElements(Duration.ofMillis(30))
+            .delayElements(Duration.ofMillis(150))
             .map(AssessmentUtils::generateAssessmentForEntity)
             .doOnComplete(() -> log.info("Successfully created quality assessments for entity type: {}", entityType));
     }
