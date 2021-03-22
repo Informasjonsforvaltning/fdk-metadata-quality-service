@@ -3,6 +3,7 @@ WORKDIR /app
 COPY pom.xml ./
 COPY src ./src
 RUN mvn clean package --no-transfer-progress -DskipTests
+RUN mvn versions:display-dependency-updates --no-transfer-progress
 
 FROM openjdk:15-slim
 ENV TZ=Europe/Oslo
