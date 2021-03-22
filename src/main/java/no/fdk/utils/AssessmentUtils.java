@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -44,7 +45,7 @@ public class AssessmentUtils {
     public static Assessment generateAssessmentForEntity(Triple<Entity, Resource, Collection<ReportEntry>> triple) {
         Collection<IndicatorType> violations = triple.getRight()
             .stream()
-            .map(entry -> AssessmentUtils.findViolations(entry, triple.getMiddle()))
+            .map(entry -> AssessmentUtils.findViolations(entry, triple))
             .flatMap(Collection::stream)
             .collect(Collectors.toSet());
 
@@ -154,6 +155,42 @@ public class AssessmentUtils {
 
     private static boolean hasAccessUrlOrAccessServiceEndpointUrl(Resource resource) {
         return resource.hasProperty(DCAT.accessURL) || hasAccessServiceEndpointUrl(resource);
+    }
+
+    private static boolean hasControlledVocabularyViolations(Collection<Resource> distributions, Collection<ReportEntry> otherReportEntries) {
+        boolean isMissingFormatOrMediaTypeProperties = distributions.stream().noneMatch(AssessmentUtils::hasFormatOrMediaType);
+
+        long formatOrMediaTypeViolationsCount = otherReportEntries
+            .stream()
+            .map(ReportEntry::resultPath)
+            .filter(AssessmentUtils::isDistributionFormatOrMediaTypePath)
+            .count();
+
+        return isMissingFormatOrMediaTypeProperties || formatOrMediaTypeViolationsCount >= distributions.size();
+    }
+
+    private static boolean hasLicenseInformationViolations(Collection<Resource> distributions, Collection<ReportEntry> otherReportEntries) {
+        boolean isMissingLicenseProperties = distributions.stream().noneMatch(AssessmentUtils::hasLicense);
+
+        long licenseViolationsCount = otherReportEntries
+            .stream()
+            .map(ReportEntry::resultPath)
+            .filter(AssessmentUtils::isLicensePath)
+            .count();
+
+        return isMissingLicenseProperties || licenseViolationsCount >= distributions.size();
+    }
+
+    private static boolean hasDistributableDataViolations(Collection<Resource> distributions, Collection<ReportEntry> otherReportEntries) {
+        boolean isMissingAccessUrlOrAccessServiceEndpointUrl = distributions.stream().noneMatch(AssessmentUtils::hasAccessUrlOrAccessServiceEndpointUrl);
+
+        long formatOrMediaTypeViolationsCount = otherReportEntries
+            .stream()
+            .map(ReportEntry::resultPath)
+            .filter(AssessmentUtils::isAccessUrlOrAccessServiceEndpointUrlPath)
+            .count();
+
+        return isMissingAccessUrlOrAccessServiceEndpointUrl || formatOrMediaTypeViolationsCount >= distributions.size();
     }
 
     private static String extractPublisherIdFromCatalogResource(Resource catalogResource) {
@@ -386,16 +423,29 @@ public class AssessmentUtils {
         return hasSameUri(entry, entity) || isNodeRelatedToResource(entityResource, entry.focusNode());
     }
 
-    private static Collection<IndicatorType> findViolations(ReportEntry entry, Resource entityResource) {
+    private static Collection<IndicatorType> findViolations(ReportEntry reportEntry, Triple<Entity, Resource, Collection<ReportEntry>> triple) {
+        Resource entityResource = triple.getMiddle();
+        Collection<ReportEntry> otherReportEntries = triple
+            .getRight()
+            .stream()
+            .filter(Predicate.not(reportEntry::same))
+            .collect(Collectors.toSet());
+
         Collection<IndicatorType> violations = new HashSet<>();
 
-        Path path = entry.resultPath();
-        Collection<String> messages = entry
+        Path path = reportEntry.resultPath();
+        Collection<String> messages = reportEntry
             .messages()
             .stream()
             .map(Node::getLiteralValue)
             .map(Object::toString)
             .collect(Collectors.toSet());
+
+        Collection<Resource> distributions = entityResource
+            .listProperties(DCAT.distribution)
+            .toList().stream()
+            .map(Statement::getResource)
+            .collect(Collectors.toList());
 
         if (isTitlePath(path)) {
             if (entityResource.hasProperty(DCTerms.title)) {
@@ -423,42 +473,22 @@ public class AssessmentUtils {
             }
         }
 
-        if (isDistributionPath(path)) {
-            if (!entityResource.hasProperty(DCAT.distribution)) {
-                violations.add(IndicatorType.distributableData);
-                violations.add(IndicatorType.controlledVocabularyUsage);
-                violations.add(IndicatorType.licenseInformation);
-            } else {
-                Collection<Resource> distributions = entityResource
-                    .listProperties(DCAT.distribution)
-                    .toList().stream()
-                    .map(Statement::getResource)
-                    .collect(Collectors.toList());
-
-                if (distributions.stream().noneMatch(AssessmentUtils::hasFormatOrMediaType)) {
-                    violations.add(IndicatorType.controlledVocabularyUsage);
-                }
-
-                if (distributions.stream().noneMatch(AssessmentUtils::hasLicense)) {
-                    violations.add(IndicatorType.licenseInformation);
-                }
-
-                if (distributions.stream().noneMatch(AssessmentUtils::hasAccessUrlOrAccessServiceEndpointUrl)) {
-                    violations.add(IndicatorType.distributableData);
-                }
-            }
-        }
-
-        if (isAccessUrlOrAccessServiceEndpointUrlPath(path)) {
+        if (isDistributionPath(path) && !entityResource.hasProperty(DCAT.distribution)) {
             violations.add(IndicatorType.distributableData);
+            violations.add(IndicatorType.controlledVocabularyUsage);
+            violations.add(IndicatorType.licenseInformation);
         }
 
-        if (isDistributionFormatOrMediaTypePath(path)) {
+        if (hasControlledVocabularyViolations(distributions, otherReportEntries)) {
             violations.add(IndicatorType.controlledVocabularyUsage);
         }
 
-        if (isLicensePath(path)) {
+        if (hasLicenseInformationViolations(distributions, otherReportEntries)) {
             violations.add(IndicatorType.licenseInformation);
+        }
+
+        if (hasDistributableDataViolations(distributions, otherReportEntries)) {
+            violations.add(IndicatorType.distributableData);
         }
 
         if (isKeywordPath(path)) {
