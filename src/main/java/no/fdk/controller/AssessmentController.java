@@ -27,14 +27,14 @@ public class AssessmentController {
     @PostMapping
     public Flux<Assessment> assessGraphNodes(
         @RequestHeader(HttpHeaders.CONTENT_TYPE) String contentType,
-        @RequestParam EntityType entityType,
+        @RequestParam String entityType,
         @RequestBody String body
     ) {
         Lang requestBodyLang = LanguageUtils.mediaTypeToRdfLanguage(contentType);
 
         Graph graph = GraphUtils.stringToGraph(body, requestBodyLang);
 
-        return assessmentService.assess(graph, entityType);
+        return assessmentService.assess(graph, EntityType.valueOfLabel(entityType));
     }
 
     @GetMapping("/catalog/rating")
