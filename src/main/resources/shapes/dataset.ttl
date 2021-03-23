@@ -64,7 +64,6 @@ schema:DistributionShape-accessURL
 schema:DistributionShape-mediaType
     a sh:PropertyShape ;
     sh:path [ sh:alternativePath ( dct:format dcat:mediaType  ) ] ;
-    sh:minCount 1 ;
     sh:nodeKind sh:IRIOrLiteral ;
     fdk:hasValueIn fdk:MediaTypes ;
     sh:severity sh:Info .
