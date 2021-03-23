@@ -6,12 +6,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.reactive.config.EnableWebFlux;
 
 @SpringBootApplication
 @EnableWebFlux
 @EnableReactiveMongoRepositories
 @EnableMongoAuditing
+@EnableScheduling
 @EnableConfigurationProperties({ApplicationProperties.class})
 public class Application {
 
