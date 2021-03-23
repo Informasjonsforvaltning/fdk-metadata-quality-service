@@ -20,7 +20,9 @@ import org.apache.jena.vocabulary.RDF;
 import org.topbraid.shacl.validation.ValidationUtil;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -82,6 +84,7 @@ public abstract class EntityValidator implements Validator {
     private Mono<RDFNode[]> getMediaTypeNodes() {
         return mediaTypeService
             .getMediaTypes()
+            .retryWhen(Retry.fixedDelay(Long.MAX_VALUE, Duration.ofSeconds(2)))
             .flatMapIterable(mediaType -> {
                 Set<Node> nodes = new HashSet<>();
 
