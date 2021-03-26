@@ -1,5 +1,6 @@
 package no.fdk.model;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.DCAT;
@@ -11,7 +12,7 @@ import java.util.Set;
 
 @RequiredArgsConstructor
 public enum EntityType {
-    DATASET("dataset", DCAT.Dataset);
+    DATASET("dataset", DCAT.Dataset, "https://datasets.fellesdatakatalog.digdir.no");
 
     private static final Map<String, EntityType> BY_LABEL = new HashMap<>();
     private static final Map<Resource, EntityType> BY_RESOURCE = new HashMap<>();
@@ -26,6 +27,8 @@ public enum EntityType {
 
     private final String label;
     private final Resource resource;
+    @Getter
+    private final String graphName;
 
     public static EntityType valueOfLabel(String label) {
         return BY_LABEL.get(label);
