@@ -1,20 +1,11 @@
 package no.fdk;
 
-import no.fdk.configuration.ApplicationProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.data.mongodb.config.EnableMongoAuditing;
-import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.web.reactive.config.EnableWebFlux;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 @SpringBootApplication
-@EnableWebFlux
-@EnableReactiveMongoRepositories
-@EnableMongoAuditing
-@EnableScheduling
-@EnableConfigurationProperties({ApplicationProperties.class})
+@ConfigurationPropertiesScan
 public class Application {
 
     public static void main(String[] args) {
