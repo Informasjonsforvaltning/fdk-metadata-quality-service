@@ -9,6 +9,8 @@ import no.fdk.utils.GraphUtils;
 import no.fdk.utils.LanguageUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.riot.Lang;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -58,6 +60,16 @@ public class AssessmentController {
         @RequestParam final Set<String> entityUris
     ) {
         return assessmentService.getEntitiesAssessments(entityUris);
+    }
+
+    @GetMapping("/entities/paged")
+    public Mono<Page<Assessment>> getPagedEntitiesAssessments(
+        @RequestParam(required = false) final String catalogId,
+        @RequestParam(required = false) final String entityType,
+        @RequestParam(required = false, defaultValue = "0") final Integer page,
+        @RequestParam(required = false, defaultValue = "10") final Integer size
+    ) {
+        return assessmentService.getPagedEntitiesAssessments(catalogId, EntityType.valueOfLabel(entityType), PageRequest.of(page, size));
     }
 
 }
