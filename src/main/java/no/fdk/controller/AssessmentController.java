@@ -26,9 +26,9 @@ public class AssessmentController {
 
     @PostMapping
     public Flux<Assessment> assessGraphNodes(
-        @RequestHeader(HttpHeaders.CONTENT_TYPE) String contentType,
-        @RequestParam String entityType,
-        @RequestBody String body
+        @RequestHeader(HttpHeaders.CONTENT_TYPE) final String contentType,
+        @RequestParam final String entityType,
+        @RequestBody final String body
     ) {
         Lang requestBodyLang = LanguageUtils.mediaTypeToRdfLanguage(contentType);
 
@@ -39,23 +39,23 @@ public class AssessmentController {
 
     @GetMapping("/catalog/rating")
     public Mono<Rating> getCatalogAssessmentRating(
-        @RequestParam(required = false) String catalogId,
-        @RequestParam(required = false) String catalogUri,
-        @RequestParam String entityType
+        @RequestParam(required = false) final String catalogId,
+        @RequestParam(required = false) final String catalogUri,
+        @RequestParam(required = false) final String entityType
     ) {
         return assessmentService.getCatalogAssessmentRating(catalogId, catalogUri, entityType);
     }
 
     @GetMapping("/entity")
     public Mono<Assessment> getEntityAssessment(
-        @RequestParam String entityUri
+        @RequestParam final String entityUri
     ) {
         return assessmentService.getEntityAssessment(entityUri);
     }
 
     @GetMapping("/entities")
     public Flux<Assessment> getEntitiesAssessments(
-        @RequestParam Set<String> entityUris
+        @RequestParam final Set<String> entityUris
     ) {
         return assessmentService.getEntitiesAssessments(entityUris);
     }
