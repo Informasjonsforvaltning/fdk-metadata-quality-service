@@ -10,6 +10,9 @@ import no.fdk.model.Rating;
 import no.fdk.repository.AssessmentRepository;
 import no.fdk.utils.AssessmentUtils;
 import org.apache.jena.graph.Graph;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.FindAndReplaceOptions;
 import org.springframework.data.mongodb.core.ReactiveFluentMongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -75,6 +78,14 @@ public class AssessmentService {
 
     public Flux<Assessment> getEntitiesAssessments(Set<String> entityUris) {
         return assessmentRepository.findAllByEntityUriIn(entityUris);
+    }
+
+    public Mono<Page<Assessment>> getPagedEntitiesAssessments(String catalogId, EntityType entityType, Pageable pageable) {
+        Mono<Long> assessmentsCount = assessmentRepository.count();
+        Flux<Assessment> assessments = assessmentRepository.findAllByEntityCatalogIdAndEntityType(catalogId, entityType, pageable);
+
+        return Mono.zip(assessmentsCount, assessments.collectList())
+            .map(tuple -> new PageImpl<Assessment>(tuple.getT2(), pageable, tuple.getT1()));
     }
 
     public void upsertAssessment(Assessment assessment) {

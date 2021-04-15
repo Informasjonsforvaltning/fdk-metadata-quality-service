@@ -125,6 +125,44 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Assessment'
+  /assessment/entities/paged:
+    get:
+      description: Returns a paged list of metadata quality assessments
+      operationId: getPagedMetadataQualityAssessments
+      parameters:
+        - in: query
+          name: catalogId
+          required: false
+          schema:
+            type: string
+          description: Catalog ID of interest
+        - in: query
+          name: entityType
+          required: false
+          schema:
+            $ref: '#/components/schemas/EntityType'
+          description: Entity type of interest
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: string
+            default: 0
+          description: Page numer
+        - in: query
+          name: size
+          required: false
+          schema:
+            type: string
+            default: 10
+          description: Page size
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedAssessments'
 components:
   schemas:
     EntityType:
@@ -222,3 +260,35 @@ components:
         updated:
           type: string
           format: date-time
+    Pageable:
+      properties:
+        offset:
+          type: integer
+        pageNumber:
+          type: integer
+        pageSize:
+          type: integer
+    PagedAssessments:
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assessment'
+        pageable:
+          $ref: '#/components/schemas/Pageable'
+        first:
+          type: boolean
+        last:
+          type: boolean
+        empty:
+          type: boolean
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+        numberOfElements:
+          type: integer
