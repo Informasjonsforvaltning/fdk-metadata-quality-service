@@ -20,9 +20,9 @@ public class ValidationController {
 
     @PostMapping
     public Mono<String> validateGraph(
-        @RequestHeader(HttpHeaders.CONTENT_TYPE) String contentType,
-        @RequestHeader(HttpHeaders.ACCEPT) String accept,
-        @RequestBody String body
+        @RequestHeader(HttpHeaders.CONTENT_TYPE) final String contentType,
+        @RequestHeader(HttpHeaders.ACCEPT) final String accept,
+        @RequestBody final String body
     ) {
         Lang requestBodyLang = LanguageUtils.mediaTypeToRdfLanguage(contentType);
         Lang responseBodyLang = LanguageUtils.mediaTypeToRdfLanguage(accept);
