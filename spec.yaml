@@ -52,7 +52,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Assessment'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Assessment'
   /assessment/catalog/rating:
     get:
       description: Returns metadata quality assessment rating of a given catalog
@@ -72,7 +74,7 @@ paths:
           description: Catalog URI of interest
         - in: query
           name: entityType
-          required: true
+          required: false
           schema:
             $ref: '#/components/schemas/EntityType'
           description: Entity type of interest
@@ -103,14 +105,16 @@ paths:
                 $ref: '#/components/schemas/Assessment'
   /assessment/entities:
     get:
-      description: Returns metadata quality assessment for given entities
+      description: Returns metadata quality assessments for given entities
       operationId: getMetadataQualityAssessmentsForEntities
       parameters:
         - in: query
           name: entityUris
           required: true
           schema:
-            type: string
+            type: array
+            items:
+              type: string
           description: Comma-separated entity URIs of interest
       responses:
         200:
@@ -151,22 +155,40 @@ components:
     DimensionType:
       type: string
       enum:
-        - findability
         - accessibility
+        - findability
+        - interoperability
+        - readability
+        - reusability
     IndicatorType:
       type: string
       enum:
-        - access_url
-        - keyword
-        - subject
+        - title
+        - titleNoOrgName
+        - description
+        - descriptionWithoutTitle
+        - distributableData
+        - controlledVocabularyUsage
+        - licenseInformation
+        - keywordUsage
+        - subjectUsage
+        - geoSearch
+        - contactPoint
     Rating:
       properties:
         score:
           type: integer
         maxScore:
           type: integer
+        satisfiedCriteria:
+          type: integer
+        totalCriteria:
+          type: integer
         category:
           $ref: '#/components/schemas/RatingCategory'
+        dimensionsRating:
+          type: object
+          additionalProperties: true
     Dimension:
       properties:
         type:
