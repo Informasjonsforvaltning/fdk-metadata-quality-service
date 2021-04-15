@@ -19,10 +19,7 @@ import org.apache.jena.vocabulary.VCARD4;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -233,6 +230,16 @@ public class AssessmentUtils {
             .id(catalogId)
             .uri(catalogUri)
             .build();
+    }
+
+    public static Map<String, String> extractTitleFromResource(Resource resource, Property property) {
+        return resource
+            .listProperties(property)
+            .toList()
+            .stream()
+            .map(Statement::getLiteral)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toMap(Literal::getLanguage, Literal::getLexicalForm));
     }
 
     private static RatingCategory determineRatingCategory(Integer score, Integer maxScore) {
@@ -519,6 +526,7 @@ public class AssessmentUtils {
                         Entity entity = Entity.builder()
                             .uri(resource.getURI())
                             .type(EntityType.DATASET)
+                            .title(extractTitleFromResource(resource, DCTerms.title))
                             .catalog(extractCatalogFromModel(model, resource))
                             .build();
 
