@@ -242,6 +242,10 @@ public class AssessmentUtils {
             .collect(Collectors.toMap(Literal::getLanguage, Literal::getLexicalForm));
     }
 
+    public static Collection<Context> extractContextsFromResource(Resource resource) {
+        return Set.of(Context.FDK);
+    }
+
     private static RatingCategory determineRatingCategory(Integer score, Integer maxScore) {
         double ratio = score.doubleValue() / maxScore.doubleValue();
 
@@ -528,6 +532,7 @@ public class AssessmentUtils {
                             .type(EntityType.DATASET)
                             .title(extractTitleFromResource(resource, DCTerms.title))
                             .catalog(extractCatalogFromModel(model, resource))
+                            .contexts(extractContextsFromResource(resource))
                             .build();
 
                         Collection<ReportEntry> relatedReportEntries = entries

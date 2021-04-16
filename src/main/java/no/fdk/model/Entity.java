@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.Collection;
 import java.util.Map;
 
 @Data
@@ -14,4 +15,5 @@ public class Entity {
     private final EntityType type;
     private final Map<String, String> title;
     private final Catalog catalog;
+    private final Collection<Context> contexts;
 }

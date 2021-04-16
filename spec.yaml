@@ -78,6 +78,15 @@ paths:
           schema:
             $ref: '#/components/schemas/EntityType'
           description: Entity type of interest
+        - in: query
+          name: contexts
+          required: false
+          schema:
+            type: array
+            default: FDK
+            items:
+              $ref: '#/components/schemas/Context'
+          description: Comma-separated list of contexts
       responses:
         200:
           description: OK
@@ -143,6 +152,15 @@ paths:
             $ref: '#/components/schemas/EntityType'
           description: Entity type of interest
         - in: query
+          name: contexts
+          required: false
+          schema:
+            type: array
+            default: FDK
+            items:
+              $ref: '#/components/schemas/Context'
+          description: Comma-separated list of contexts
+        - in: query
           name: page
           required: false
           schema:
@@ -186,6 +204,10 @@ components:
           additionalProperties: true
         catalog:
           $ref: '#/components/schemas/Catalog'
+        contexts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Context'
     RatingCategory:
       type: string
       enum:
@@ -215,6 +237,11 @@ components:
         - subjectUsage
         - geoSearch
         - contactPoint
+    Context:
+      type: string
+      enum:
+        - FDK
+        - NAP
     Rating:
       properties:
         score:
