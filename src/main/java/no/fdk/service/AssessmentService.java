@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import no.fdk.exception.BadRequestException;
 import no.fdk.exception.NotFoundException;
 import no.fdk.model.Assessment;
+import no.fdk.model.Context;
 import no.fdk.model.EntityType;
 import no.fdk.model.Rating;
 import no.fdk.repository.AssessmentRepository;
@@ -21,6 +22,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -47,14 +49,14 @@ public class AssessmentService {
             .doOnComplete(() -> log.info("Successfully created quality assessments for entity type: {}", entityType));
     }
 
-    public Mono<Rating> getCatalogAssessmentRating(String catalogId, String catalogUri, String entityType) {
+    public Mono<Rating> getCatalogAssessmentRating(String catalogId, String catalogUri, String entityType, Collection<Context> contexts) {
         if (catalogId == null && catalogUri == null) {
             throw new BadRequestException("One of [catalogId, catalogUri] must be provided");
         }
 
         return (catalogId != null
-            ? assessmentRepository.findAllByEntityCatalogIdAndEntityType(catalogId, EntityType.valueOfLabel(entityType))
-            : assessmentRepository.findAllByEntityCatalogUriAndEntityType(catalogUri, EntityType.valueOfLabel(entityType)))
+            ? assessmentRepository.findAllByEntityCatalogIdAndEntityTypeAndEntityContextsIn(catalogId, EntityType.valueOfLabel(entityType), contexts)
+            : assessmentRepository.findAllByEntityCatalogUriAndEntityTypeAndEntityContextsIn(catalogUri, EntityType.valueOfLabel(entityType), contexts))
             .reduce(
                 Rating
                     .builder()
@@ -80,12 +82,12 @@ public class AssessmentService {
         return assessmentRepository.findAllByEntityUriIn(entityUris);
     }
 
-    public Mono<Page<Assessment>> getPagedEntitiesAssessments(String catalogId, EntityType entityType, Pageable pageable) {
-        Mono<Long> assessmentsCount = assessmentRepository.count();
-        Flux<Assessment> assessments = assessmentRepository.findAllByEntityCatalogIdAndEntityType(catalogId, entityType, pageable);
+    public Mono<Page<Assessment>> getPagedEntitiesAssessments(String catalogId, EntityType entityType, Collection<Context> contexts, Pageable pageable) {
+        Mono<Long> assessmentsCount = assessmentRepository.countByEntityCatalogIdAndEntityTypeAndEntityContextsIn(catalogId, entityType, contexts);
+        Flux<Assessment> assessments = assessmentRepository.findAllByEntityCatalogIdAndEntityTypeAndEntityContextsIn(catalogId, entityType, contexts, pageable);
 
         return Mono.zip(assessmentsCount, assessments.collectList())
-            .map(tuple -> new PageImpl<Assessment>(tuple.getT2(), pageable, tuple.getT1()));
+            .map(tuple -> new PageImpl<>(tuple.getT2(), pageable, tuple.getT1()));
     }
 
     public void upsertAssessment(Assessment assessment) {

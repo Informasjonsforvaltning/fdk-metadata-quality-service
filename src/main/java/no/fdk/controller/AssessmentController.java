@@ -2,6 +2,7 @@ package no.fdk.controller;
 
 import lombok.RequiredArgsConstructor;
 import no.fdk.model.Assessment;
+import no.fdk.model.Context;
 import no.fdk.model.EntityType;
 import no.fdk.model.Rating;
 import no.fdk.service.AssessmentService;
@@ -43,9 +44,10 @@ public class AssessmentController {
     public Mono<Rating> getCatalogAssessmentRating(
         @RequestParam(required = false) final String catalogId,
         @RequestParam(required = false) final String catalogUri,
-        @RequestParam(required = false) final String entityType
+        @RequestParam(required = false) final String entityType,
+        @RequestParam(required = false, defaultValue = "FDK") final Set<Context> contexts
     ) {
-        return assessmentService.getCatalogAssessmentRating(catalogId, catalogUri, entityType);
+        return assessmentService.getCatalogAssessmentRating(catalogId, catalogUri, entityType, contexts);
     }
 
     @GetMapping("/entity")
@@ -66,10 +68,11 @@ public class AssessmentController {
     public Mono<Page<Assessment>> getPagedEntitiesAssessments(
         @RequestParam(required = false) final String catalogId,
         @RequestParam(required = false) final String entityType,
+        @RequestParam(required = false, defaultValue = "FDK") final Set<Context> contexts,
         @RequestParam(required = false, defaultValue = "0") final Integer page,
         @RequestParam(required = false, defaultValue = "10") final Integer size
     ) {
-        return assessmentService.getPagedEntitiesAssessments(catalogId, EntityType.valueOfLabel(entityType), PageRequest.of(page, size));
+        return assessmentService.getPagedEntitiesAssessments(catalogId, EntityType.valueOfLabel(entityType), contexts, PageRequest.of(page, size));
     }
 
 }
