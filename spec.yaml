@@ -195,6 +195,8 @@ components:
           type: string
     Entity:
       properties:
+        id:
+          type: string
         uri:
           type: string
         type:

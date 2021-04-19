@@ -11,6 +11,7 @@ import org.apache.jena.shacl.ValidationReport;
 import org.apache.jena.shacl.validation.ReportEntry;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathFactory;
+import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.util.URIref;
 import org.apache.jena.vocabulary.DCAT;
 import org.apache.jena.vocabulary.DCTerms;
@@ -55,7 +56,7 @@ public class AssessmentUtils {
 
         return Assessment
             .builder()
-            .id(triple.getLeft().getUri())
+            .id(triple.getLeft().getId())
             .entity(triple.getLeft())
             .dimensions(dimensions)
             .rating(buildRating(indicators))
@@ -208,7 +209,7 @@ public class AssessmentUtils {
             : null;
     }
 
-    public static Catalog extractCatalogFromModel(Model model, Resource datasetResource) {
+    private static Catalog extractCatalogFromModel(Model model, Resource datasetResource) {
         String catalogId = null;
         String catalogUri = null;
 
@@ -232,7 +233,22 @@ public class AssessmentUtils {
             .build();
     }
 
-    public static Map<String, String> extractTitleFromResource(Resource resource, Property property) {
+    private static String extractFdkIdFromResource(Resource resource) {
+        return resource
+            .getModel()
+            .listSubjectsWithProperty(FOAF.primaryTopic, resource)
+            .toList()
+            .stream()
+            .filter(r -> r.hasProperty(RDF.type, DCAT.CatalogRecord))
+            .findFirst()
+            .map(r -> r.getProperty(DCTerms.identifier))
+            .map(Statement::getObject)
+            .map(RDFNode::asLiteral)
+            .map(Literal::getString)
+            .orElse(null);
+    }
+
+    private static Map<String, String> extractTitleFromResource(Resource resource, Property property) {
         return resource
             .listProperties(property)
             .toList()
@@ -242,7 +258,7 @@ public class AssessmentUtils {
             .collect(Collectors.toMap(Literal::getLanguage, Literal::getLexicalForm));
     }
 
-    public static Collection<Context> extractContextsFromResource(Resource resource) {
+    private static Collection<Context> extractContextsFromResource(Resource resource) {
         return Set.of(Context.FDK);
     }
 
@@ -528,6 +544,7 @@ public class AssessmentUtils {
             Flux.fromIterable(model.listResourcesWithProperty(RDF.type, DCAT.Dataset).toList())
                 .map(resource -> {
                         Entity entity = Entity.builder()
+                            .id(extractFdkIdFromResource(resource))
                             .uri(resource.getURI())
                             .type(EntityType.DATASET)
                             .title(extractTitleFromResource(resource, DCTerms.title))
