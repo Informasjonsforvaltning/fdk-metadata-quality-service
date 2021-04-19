@@ -11,6 +11,7 @@ import java.util.Map;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Entity {
+    private final String id;
     private final String uri;
     private final EntityType type;
     private final Map<String, String> title;
