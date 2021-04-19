@@ -28,34 +28,7 @@ paths:
             text/turtle:
               schema:
                 type: string
-  /assessment:
-    post:
-      description: Creates a metadata quality assessment
-      operationId: createMetadataQualityAssessment
-      parameters:
-        - in: query
-          name: entityType
-          required: true
-          schema:
-            $ref: '#/components/schemas/EntityType'
-          description: Entity type of interest
-      requestBody:
-        description: An RDF graph
-        content:
-          text/turtle:
-            schema:
-              type: string
-        required: true
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Assessment'
-  /assessment/catalog/rating:
+  /rating/catalog:
     get:
       description: Returns metadata quality assessment rating of a given catalog
       operationId: getCatalogAssessmentRating
@@ -94,10 +67,179 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Rating'
-  /assessment/entity:
+  /assessments:
+    post:
+      description: Creates a metadata quality assessment
+      operationId: createMetadataQualityAssessment
+      parameters:
+        - in: query
+          name: entityType
+          required: true
+          schema:
+            $ref: '#/components/schemas/EntityType'
+          description: Entity type of interest
+      requestBody:
+        description: An RDF graph
+        content:
+          text/turtle:
+            schema:
+              type: string
+        required: true
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Assessment'
+  /assessments/entities:
+    get:
+      description: Returns a paged list of metadata quality assessments
+      operationId: listAssessments
+      parameters:
+        - in: query
+          name: ids
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          description: Comma-separated list of assessment IDs
+        - in: query
+          name: catalogId
+          required: false
+          schema:
+            type: string
+          description: Catalog ID of interest
+        - in: query
+          name: entityType
+          required: false
+          schema:
+            $ref: '#/components/schemas/EntityType'
+          description: Entity type of interest
+        - in: query
+          name: contexts
+          required: false
+          schema:
+            type: array
+            default: FDK
+            items:
+              $ref: '#/components/schemas/Context'
+          description: Comma-separated list of contexts
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: string
+            default: 0
+          description: Page numer
+        - in: query
+          name: size
+          required: false
+          schema:
+            type: string
+            default: 10
+          description: Page size
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedAssessments'
+  /assessments/entities/{id}:
     get:
       description: Returns metadata quality assessment for a given entity
-      operationId: getMetadataQualityAssessmentForEntity
+      operationId: getAssessment
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Assessment ID of interest (same as entity ID)
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assessment'
+  /assessment:
+    post:
+      deprecated: true
+      description: Creates a metadata quality assessment
+      operationId: deprecated_createMetadataQualityAssessment
+      parameters:
+        - in: query
+          name: entityType
+          required: true
+          schema:
+            $ref: '#/components/schemas/EntityType'
+          description: Entity type of interest
+      requestBody:
+        description: An RDF graph
+        content:
+          text/turtle:
+            schema:
+              type: string
+        required: true
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Assessment'
+  /assessment/catalog/rating:
+    get:
+      deprecated: true
+      description: Returns metadata quality assessment rating of a given catalog
+      operationId: deprecated_getCatalogAssessmentRating
+      parameters:
+        - in: query
+          name: catalogId
+          required: false
+          schema:
+            type: string
+          description: Catalog ID of interest
+        - in: query
+          name: catalogUri
+          required: false
+          schema:
+            type: string
+          description: Catalog URI of interest
+        - in: query
+          name: entityType
+          required: false
+          schema:
+            $ref: '#/components/schemas/EntityType'
+          description: Entity type of interest
+        - in: query
+          name: contexts
+          required: false
+          schema:
+            type: array
+            default: FDK
+            items:
+              $ref: '#/components/schemas/Context'
+          description: Comma-separated list of contexts
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+  /assessment/entity:
+    get:
+      deprecated: true
+      description: Returns metadata quality assessment for a given entity
+      operationId: deprecated_getMetadataQualityAssessmentForEntity
       parameters:
         - in: query
           name: entityUri
@@ -114,8 +256,9 @@ paths:
                 $ref: '#/components/schemas/Assessment'
   /assessment/entities:
     get:
+      deprecated: true
       description: Returns metadata quality assessments for given entities
-      operationId: getMetadataQualityAssessmentsForEntities
+      operationId: deprecated_getMetadataQualityAssessmentsForEntities
       parameters:
         - in: query
           name: entityUris
@@ -136,8 +279,9 @@ paths:
                   $ref: '#/components/schemas/Assessment'
   /assessment/entities/paged:
     get:
+      deprecated: true
       description: Returns a paged list of metadata quality assessments
-      operationId: getPagedMetadataQualityAssessments
+      operationId: deprecated_getPagedMetadataQualityAssessments
       parameters:
         - in: query
           name: catalogId

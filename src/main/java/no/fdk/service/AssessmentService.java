@@ -4,15 +4,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fdk.exception.BadRequestException;
 import no.fdk.exception.NotFoundException;
-import no.fdk.model.Assessment;
-import no.fdk.model.Context;
-import no.fdk.model.EntityType;
-import no.fdk.model.Rating;
+import no.fdk.model.*;
 import no.fdk.repository.AssessmentRepository;
 import no.fdk.utils.AssessmentUtils;
+import no.fdk.utils.PaginationUtils;
 import org.apache.jena.graph.Graph;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.FindAndReplaceOptions;
 import org.springframework.data.mongodb.core.ReactiveFluentMongoOperations;
@@ -24,6 +23,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import static java.lang.String.format;
@@ -72,22 +72,55 @@ public class AssessmentService {
             .switchIfEmpty(Mono.error(new NotFoundException(format("Could not find any entries with catalog ID: %s or catalog URI: %s and entity type: %s", catalogId, catalogUri, entityType))));
     }
 
-    public Mono<Assessment> getEntityAssessment(String entityUri) {
+    public Mono<Assessment> getAssessment(String id) {
         return assessmentRepository
-            .findById(entityUri)
-            .switchIfEmpty(Mono.error(new NotFoundException(format("Could not find any entries with entity URI: %s", entityUri))));
+            .findById(id)
+            .switchIfEmpty(Mono.error(new NotFoundException(format("Could not find an assessment with ID: %s", id))));
     }
 
-    public Flux<Assessment> getEntitiesAssessments(Set<String> entityUris) {
+    @Deprecated
+    public Flux<Assessment> getAssessments(Set<String> entityUris) {
         return assessmentRepository.findAllByEntityUriIn(entityUris);
     }
 
-    public Mono<Page<Assessment>> getPagedEntitiesAssessments(String catalogId, EntityType entityType, Collection<Context> contexts, Pageable pageable) {
-        Mono<Long> assessmentsCount = assessmentRepository.countByEntityCatalogIdAndEntityTypeAndEntityContextsIn(catalogId, entityType, contexts);
-        Flux<Assessment> assessments = assessmentRepository.findAllByEntityCatalogIdAndEntityTypeAndEntityContextsIn(catalogId, entityType, contexts, pageable);
+    public Mono<Page<Assessment>> listAssessments(
+        Set<String> ids,
+        String catalogId,
+        EntityType entityType,
+        Set<Context> contexts,
+        Pageable pageable
+    ) {
+        if (ids != null && !ids.isEmpty()) {
+            Flux<Assessment> assessments = assessmentRepository.findAllById(ids);
 
-        return Mono.zip(assessmentsCount, assessments.collectList())
-            .map(tuple -> new PageImpl<>(tuple.getT2(), pageable, tuple.getT1()));
+            return Mono.zip(assessments.collectList(), assessments.count()).map(PaginationUtils::toPage);
+        }
+
+        Entity entity = Entity
+            .builder()
+            .catalog(Catalog.builder().id(catalogId).build())
+            .type(entityType)
+            .contexts(contexts)
+            .build();
+        Assessment assessment = Assessment
+            .builder()
+            .entity(entity)
+            .build();
+
+        ExampleMatcher matcher = ExampleMatcher.matching().withIgnoreNullValues();
+        Example<Assessment> example = Example.of(assessment, matcher);
+
+        Flux<Assessment> assessments = assessmentRepository.findAll(example);
+
+        return Mono.zip(assessments.collectList(), Mono.justOrEmpty(pageable), assessments.count())
+            .map(PaginationUtils::toPage);
+    }
+
+    public Mono<Page<Assessment>> listAssessments(String catalogId, EntityType entityType, Collection<Context> contexts, Pageable pageable) {
+        Mono<Long> count = assessmentRepository.countByEntityCatalogIdAndEntityTypeAndEntityContextsIn(catalogId, entityType, contexts);
+        Mono<List<Assessment>> assessments = assessmentRepository.findAllByEntityCatalogIdAndEntityTypeAndEntityContextsIn(catalogId, entityType, contexts, pageable).collectList();
+
+        return Mono.zip(assessments, Mono.justOrEmpty(pageable), count).map(PaginationUtils::toPage);
     }
 
     public void upsertAssessment(Assessment assessment) {

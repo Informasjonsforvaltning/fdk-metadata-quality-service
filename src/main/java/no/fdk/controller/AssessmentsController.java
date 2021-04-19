@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import no.fdk.model.Assessment;
 import no.fdk.model.Context;
 import no.fdk.model.EntityType;
-import no.fdk.model.Rating;
 import no.fdk.service.AssessmentService;
 import no.fdk.utils.GraphUtils;
 import no.fdk.utils.LanguageUtils;
@@ -19,12 +18,11 @@ import reactor.core.publisher.Mono;
 
 import java.util.Set;
 
-@Deprecated
 @RestController
 @CrossOrigin(origins = {"*"})
-@RequestMapping("/assessment")
+@RequestMapping("/assessments")
 @RequiredArgsConstructor
-public class AssessmentController {
+public class AssessmentsController {
 
     private final AssessmentService assessmentService;
 
@@ -35,45 +33,32 @@ public class AssessmentController {
         @RequestBody final String body
     ) {
         Lang requestBodyLang = LanguageUtils.mediaTypeToRdfLanguage(contentType);
-
         Graph graph = GraphUtils.stringToGraph(body, requestBodyLang);
 
         return assessmentService.assess(graph, EntityType.valueOfLabel(entityType));
     }
 
-    @GetMapping("/catalog/rating")
-    public Mono<Rating> getCatalogAssessmentRating(
-        @RequestParam(required = false) final String catalogId,
-        @RequestParam(required = false) final String catalogUri,
-        @RequestParam(required = false) final String entityType,
-        @RequestParam(required = false, defaultValue = "FDK") final Set<Context> contexts
-    ) {
-        return assessmentService.getCatalogAssessmentRating(catalogId, catalogUri, entityType, contexts);
-    }
-
-    @GetMapping("/entity")
-    public Mono<Assessment> getEntityAssessment(
-        @RequestParam final String entityUri
-    ) {
-        return assessmentService.getAssessment(entityUri);
-    }
-
     @GetMapping("/entities")
-    public Flux<Assessment> getEntitiesAssessments(
-        @RequestParam final Set<String> entityUris
-    ) {
-        return assessmentService.getAssessments(entityUris);
-    }
-
-    @GetMapping("/entities/paged")
-    public Mono<Page<Assessment>> getPagedEntitiesAssessments(
+    public Mono<Page<Assessment>> listAssessments(
+        @RequestParam(required = false) final Set<String> ids,
         @RequestParam(required = false) final String catalogId,
         @RequestParam(required = false) final String entityType,
         @RequestParam(required = false, defaultValue = "FDK") final Set<Context> contexts,
         @RequestParam(required = false, defaultValue = "0") final Integer page,
         @RequestParam(required = false, defaultValue = "10") final Integer size
     ) {
-        return assessmentService.listAssessments(catalogId, EntityType.valueOfLabel(entityType), contexts, PageRequest.of(page, size));
+        return assessmentService.listAssessments(
+            ids,
+            catalogId,
+            EntityType.valueOfLabel(entityType),
+            contexts,
+            PageRequest.of(page, size)
+        );
+    }
+
+    @GetMapping("/entities/{id}")
+    public Mono<Assessment> getAssessment(@PathVariable final String id) {
+        return assessmentService.getAssessment(id);
     }
 
 }
