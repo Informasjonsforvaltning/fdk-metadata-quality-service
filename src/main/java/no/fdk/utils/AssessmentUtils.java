@@ -12,7 +12,6 @@ import org.apache.jena.shacl.validation.ReportEntry;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.sparql.vocabulary.FOAF;
-import org.apache.jena.util.URIref;
 import org.apache.jena.vocabulary.DCAT;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.RDF;
@@ -213,17 +212,19 @@ public class AssessmentUtils {
         String catalogId = null;
         String catalogUri = null;
 
-        ResIterator catalogIterator = model.listResourcesWithProperty(DCAT.dataset, ResourceFactory.createResource(URIref.encode(datasetResource.getURI())));
-
-        if (catalogIterator.hasNext()) {
-            Resource catalogResource = catalogIterator.nextResource();
-
-            catalogId = extractPublisherIdFromCatalogResource(catalogResource);
-            catalogUri = catalogResource.getURI();
+        if (datasetResource.hasProperty(DCTerms.publisher)) {
+            catalogId = extractPublisherIdFromPublisherResource(datasetResource.getPropertyResourceValue(DCTerms.publisher));
         }
 
-        if (catalogId == null && datasetResource.hasProperty(DCTerms.publisher)) {
-            catalogId = extractPublisherIdFromPublisherResource(datasetResource.getPropertyResourceValue(DCTerms.publisher));
+        if (catalogId == null) {
+            Resource catalogResource = model.listResourcesWithProperty(DCAT.dataset, datasetResource)
+                .toList()
+                .stream()
+                .findFirst()
+                .orElse(null);
+
+            catalogId = extractPublisherIdFromCatalogResource(catalogResource);
+            catalogUri = catalogResource != null ? catalogResource.getURI() : null;
         }
 
         return Catalog
