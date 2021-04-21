@@ -111,8 +111,11 @@ public class AssessmentService {
         Example<Assessment> example = Example.of(assessment, matcher);
 
         Flux<Assessment> assessments = assessmentRepository.findAll(example);
+        Flux<Assessment> assessmentsSubset = assessments
+            .skip(pageable.getOffset())
+            .take(pageable.getPageSize());
 
-        return Mono.zip(assessments.collectList(), Mono.justOrEmpty(pageable), assessments.count())
+        return Mono.zip(assessmentsSubset.collectList(), Mono.justOrEmpty(pageable), assessments.count())
             .map(PaginationUtils::toPage);
     }
 
