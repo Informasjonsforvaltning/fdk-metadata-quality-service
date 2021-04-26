@@ -26,8 +26,9 @@ public class RabbitMQListener {
             .flatMapMany(graph -> assessmentService.assess(graph, EntityType.DATASET))
             .doOnNext(assessmentService::upsertAssessment)
             .count()
+            .onErrorReturn(0L)
             .doOnSuccess(count -> log.info("Finished creating {} assessments", count))
-            .doOnError(Throwable::printStackTrace)
+            .doOnError(throwable -> log.error("Failed to process message and create assessments", throwable))
             .subscribe();
     }
 
