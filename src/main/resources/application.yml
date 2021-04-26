@@ -18,7 +18,7 @@ spring:
     username: ${RABBIT_USERNAME}
     password: ${RABBIT_PASSWORD}
 application:
-  sparql-uri: ${FDK_SPARQL_SERVICE_URI:https://sparql.fellesdatakatalog.digdir.no}/fuseki/harvested/query
+  sparql-uri: ${FDK_SPARQL_SERVICE_URI:https://sparql.fellesdatakatalog.digdir.no}
 
 ---
 
@@ -40,4 +40,4 @@ spring:
     username: ${RABBIT_USERNAME:guest}
     password: ${RABBIT_PASSWORD:guest}
 application:
-  sparql-uri: ${FDK_SPARQL_SERVICE_URI:https://sparql.staging.fellesdatakatalog.digdir.no}/fuseki/harvested/query
+  sparql-uri: ${FDK_SPARQL_SERVICE_URI:https://sparql.staging.fellesdatakatalog.digdir.no}
