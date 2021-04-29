@@ -15,7 +15,7 @@ services:
       - RABBIT_PORT=5672
       - RABBIT_USERNAME=guest
       - RABBIT_PASSWORD=guest
-      - DATASET_HARVESTER_BASE_URI=https://datasets.staging.fellesdatakatalog.digdir.no
+      - FDK_SPARQL_SERVICE_URI=https://sparql.staging.fellesdatakatalog.digdir.no
     depends_on:
       - db
       - rabbitmq

@@ -19,7 +19,7 @@ A service that assess metadata quality of datasets, data services and concepts a
 - Build a Docker container using the following command:
   - `docker build -t fdk-metadata-quality-service .`
 - Run the container using the following comand:
-  - `docker run -d -p 8080:8080 -e LOG_LEVEL -e MONGO_HOST -e MONGO_PORT -e MONGO_USERNAME -e MONGO_PASSWORD -e RABBIT_HOST -e RABBIT_PORT -e RABBIT_USERNAME -e RABBIT_PASSWORD -e DATASET_HARVESTER_BASE_URI fdk-metadata-quality-service`
+  - `docker run -d -p 8080:8080 -e LOG_LEVEL -e MONGO_HOST -e MONGO_PORT -e MONGO_USERNAME -e MONGO_PASSWORD -e RABBIT_HOST -e RABBIT_PORT -e RABBIT_USERNAME -e RABBIT_PASSWORD -e FDK_SPARQL_SERVICE_URI fdk-metadata-quality-service`
 
 #### Running application using Docker Compose
 
@@ -52,7 +52,7 @@ A service that assess metadata quality of datasets, data services and concepts a
   - `guest` (develop profile)
 - `RABBIT_PASSWORD` - RabbitMQ password
   - `guest` (develop profile)
-- `DATASET_HARVESTER_BASE_URI` - Dataset harvester base URI
+- `FDK_SPARQL_SERVICE_URI` - SPARQL service base URI
 
 ## Methodology
 We follow closely how [EDP](https://www.europeandataportal.eu/mqa/methodology?locale=en) measures the quality of harvested metadata.
