@@ -3,11 +3,11 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix fdk: <http://data.norge.no/fdk#> .
+@prefix mqa: <http://data.norge.no/mqa#> .
 
-fdk:
+mqa:
     a owl:Ontology ;
-    rdfs:label "FDK shapes library"@en ;
+    rdfs:label "FDK metadata quality shapes library"@en ;
     rdfs:comment "Custom SPARQL-based validators for internal use"@en ;
     owl:imports sh: ;
     sh:declare [
@@ -15,15 +15,15 @@ fdk:
         sh:prefix "rdf" ;
     ] .
 
-fdk:HasValueInConstraintComponent
+mqa:HasValueInConstraintComponent
     a sh:ConstraintComponent ;
     rdfs:label "Has value in SHACL list constraint component"@en ;
     rdfs:comment "A constraint component that can be used to verify that at least one value node must be a member of a provided SHACL list."@en ;
-    sh:parameter fdk:HasValueInConstraintComponent-hasValueIn ;
+    sh:parameter mqa:HasValueInConstraintComponent-hasValueIn ;
     sh:message "At least one of the value nodes must be a member of list {$hasValueIn}" ;
     sh:propertyValidator [
           a sh:SPARQLSelectValidator ;
-          sh:prefixes fdk: ;
+          sh:prefixes mqa: ;
           sh:select """
             SELECT $this
             WHERE {
@@ -36,23 +36,23 @@ fdk:HasValueInConstraintComponent
             }
         """ ;
       ];
-    rdfs:isDefinedBy fdk: .
+    rdfs:isDefinedBy mqa: .
 
-fdk:HasValueInConstraintComponent-hasValueIn
+mqa:HasValueInConstraintComponent-hasValueIn
     a sh:Parameter ;
-    sh:path fdk:hasValueIn ;
+    sh:path mqa:hasValueIn ;
     sh:maxCount 1 ;
-    rdfs:isDefinedBy fdk: .
+    rdfs:isDefinedBy mqa: .
 
-fdk:hasValueIn
+mqa:hasValueIn
     a rdf:Property ;
     rdfs:label "has value in"@en ;
     rdfs:comment "Specifies a list of allowed values so that at least one value node must be among the members of the given list."@en ;
     rdfs:range rdf:List ;
-    rdfs:isDefinedBy fdk: .
+    rdfs:isDefinedBy mqa: .
 
-fdk:MediaTypes
+mqa:MediaTypes
     a rdf:List ;
     rdfs:label "An RDF list of media types"@en ;
     rdfs:comment "Specifies a list of media types used in FDK."@en ;
-    rdfs:isDefinedBy fdk: .
+    rdfs:isDefinedBy mqa: .

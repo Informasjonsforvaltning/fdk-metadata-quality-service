@@ -1,7 +1,7 @@
 package no.fdk.validation;
 
 import lombok.RequiredArgsConstructor;
-import no.fdk.rdf.FDK;
+import no.fdk.rdf.MQA;
 import no.fdk.service.MediaTypeService;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -67,14 +67,14 @@ public abstract class EntityValidator implements Validator {
     private Mono<Graph> getMediaTypesGraph() {
         return Mono.just(ModelFactory.createDefaultModel())
             .map(model -> model.setNsPrefixes(PrefixMapping.Standard))
-            .map(model -> model.setNsPrefix(FDK.PREFIX, FDK.NS))
+            .map(model -> model.setNsPrefix(MQA.PREFIX, MQA.NS))
             .zipWith(getMediaTypeNodes())
             .map(tuple -> {
                 Resource list = tuple.getT1().createList(tuple.getT2())
                     .asResource()
                     .addProperty(RDF.type, RDF.List);
 
-                ResourceUtils.renameResource(list, FDK.uri("MediaTypes"));
+                ResourceUtils.renameResource(list, MQA.uri("MediaTypes"));
 
                 return tuple.getT1();
             })
