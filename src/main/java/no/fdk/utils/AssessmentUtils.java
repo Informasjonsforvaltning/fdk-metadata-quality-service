@@ -3,6 +3,7 @@ package no.fdk.utils;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import no.fdk.model.*;
+import no.fdk.rdf.FDK;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -260,7 +261,14 @@ public class AssessmentUtils {
     }
 
     private static Collection<Context> extractContextsFromResource(Resource resource) {
-        return Set.of(Context.FDK);
+        Set<Context> contexts = new HashSet<>(Set.of(Context.FDK));
+
+        Optional.ofNullable(resource.getProperty(FDK.isRelatedToTransportportal))
+            .map(Statement::getBoolean)
+            .filter(Boolean::booleanValue)
+            .ifPresent(value -> contexts.add(Context.NAP));
+
+        return contexts;
     }
 
     private static RatingCategory determineRatingCategory(Integer score, Integer maxScore) {

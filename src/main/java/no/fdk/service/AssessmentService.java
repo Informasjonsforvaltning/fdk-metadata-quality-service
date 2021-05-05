@@ -1,5 +1,6 @@
 package no.fdk.service;
 
+import com.mongodb.BasicDBList;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fdk.exception.BadRequestException;
@@ -107,7 +108,10 @@ public class AssessmentService {
             .entity(entity)
             .build();
 
-        ExampleMatcher matcher = ExampleMatcher.matching().withIgnoreNullValues();
+        ExampleMatcher matcher = ExampleMatcher
+            .matching()
+            .withIgnoreNullValues()
+            .withMatcher("entity.contexts", match -> match.transform(source -> source.map(o -> ((BasicDBList) o).iterator().next())).exact());
         Example<Assessment> example = Example.of(assessment, matcher);
 
         Flux<Assessment> assessments = assessmentRepository.findAll(example);
