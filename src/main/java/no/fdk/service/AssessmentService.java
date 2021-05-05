@@ -24,7 +24,6 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import static java.lang.String.format;
@@ -79,11 +78,6 @@ public class AssessmentService {
             .switchIfEmpty(Mono.error(new NotFoundException(format("Could not find an assessment with ID: %s", id))));
     }
 
-    @Deprecated
-    public Flux<Assessment> getAssessments(Set<String> entityUris) {
-        return assessmentRepository.findAllByEntityUriIn(entityUris);
-    }
-
     public Mono<Page<Assessment>> listAssessments(
         Set<String> ids,
         String catalogId,
@@ -121,13 +115,6 @@ public class AssessmentService {
 
         return Mono.zip(assessmentsSubset.collectList(), Mono.justOrEmpty(pageable), assessments.count())
             .map(PaginationUtils::toPage);
-    }
-
-    public Mono<Page<Assessment>> listAssessments(String catalogId, EntityType entityType, Collection<Context> contexts, Pageable pageable) {
-        Mono<Long> count = assessmentRepository.countByEntityCatalogIdAndEntityTypeAndEntityContextsIn(catalogId, entityType, contexts);
-        Mono<List<Assessment>> assessments = assessmentRepository.findAllByEntityCatalogIdAndEntityTypeAndEntityContextsIn(catalogId, entityType, contexts, pageable).collectList();
-
-        return Mono.zip(assessments, Mono.justOrEmpty(pageable), count).map(PaginationUtils::toPage);
     }
 
     public void upsertAssessment(Assessment assessment) {
