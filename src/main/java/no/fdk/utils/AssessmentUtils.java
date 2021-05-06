@@ -263,6 +263,10 @@ public class AssessmentUtils {
     private static Collection<Context> extractContextsFromResource(Resource resource) {
         Set<Context> contexts = new HashSet<>(Set.of(Context.FDK));
 
+        if (resource.getURI().equals("http://brreg.no/catalogs/910244132/datasets/09b578b5-4d30-4d63-ad13-9871a2e708ce")) {
+            System.out.println("DEBUG: " + resource.getProperty(FDK.isRelatedToTransportportal).getBoolean());
+        }
+
         Optional.ofNullable(resource.getProperty(FDK.isRelatedToTransportportal))
             .map(Statement::getBoolean)
             .filter(Boolean::booleanValue)
