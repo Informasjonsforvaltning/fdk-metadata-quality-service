@@ -51,7 +51,7 @@ public class IANAMediaTypeService {
     private Flux<MediaType> harvestMediaTypeRegistry(String registry) {
         return Mono.justOrEmpty(createRegistryUrl(registry))
             .flatMapMany(this::extractMediaTypeRegistryRecords)
-            .map(code -> MediaType.builder().uri(format("%s/%s", BASE_URI, code)).code(code).build());
+            .map(name -> buildMediaType(registry, name));
     }
 
     private URL createRegistryUrl(String registry) {
@@ -76,7 +76,7 @@ public class IANAMediaTypeService {
             List<CSVRecord> records = CSVParser.parse(url, charset, format).getRecords();
 
             return Flux.fromIterable(records)
-                .map(record -> record.get(1))
+                .map(record -> record.get(0))
                 .map(String::trim)
                 .filter(Predicate.not(String::isEmpty));
         } catch (IOException e) {
@@ -84,6 +84,17 @@ public class IANAMediaTypeService {
         }
 
         return Flux.empty();
+    }
+
+    private MediaType buildMediaType(String registry, String name) {
+        String code = format("%s/%s", registry, name);
+        String uri = format("%s/%s", BASE_URI, code);
+
+        return MediaType
+            .builder()
+            .uri(uri)
+            .code(code)
+            .build();
     }
 
 }

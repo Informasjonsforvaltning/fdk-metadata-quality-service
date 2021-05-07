@@ -33,8 +33,7 @@ public class MediaTypeService {
         "application/vnd.sealed-xls",
         "application/x.netex",
         "application/x.wfs",
-        "application/x.wms",
-        "text/plain"
+        "application/x.wms"
     );
 
     private final Collection<MediaType> mediaTypes = new HashSet<>();
