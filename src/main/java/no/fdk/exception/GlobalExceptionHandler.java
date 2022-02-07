@@ -1,12 +1,13 @@
 package no.fdk.exception;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.web.ResourceProperties;
+import org.springframework.boot.autoconfigure.web.WebProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.AbstractErrorWebExceptionHandler;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.stereotype.Component;
@@ -24,10 +25,11 @@ public class GlobalExceptionHandler extends AbstractErrorWebExceptionHandler {
 
     public GlobalExceptionHandler(
         GlobalErrorAttributes globalErrorAttributes,
+        WebProperties.Resources resources,
         ApplicationContext applicationContext,
         ServerCodecConfigurer serverCodecConfigurer
     ) {
-        super(globalErrorAttributes, new ResourceProperties(), applicationContext);
+        super(globalErrorAttributes, resources, applicationContext);
         super.setMessageWriters(serverCodecConfigurer.getWriters());
     }
 
@@ -46,7 +48,9 @@ public class GlobalExceptionHandler extends AbstractErrorWebExceptionHandler {
             .filter(ResponseStatusException.class::isInstance)
             .map(ResponseStatusException.class::cast)
             .flatMap(e -> {
-                log.error(e.getReason(), e);
+                if(e.getStatus() != HttpStatus.NOT_FOUND) {
+                    log.error(e.getReason(), e);
+                }
 
                 return ServerResponse
                     .status(e.getStatus())

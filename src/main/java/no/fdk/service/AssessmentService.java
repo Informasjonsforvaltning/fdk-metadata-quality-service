@@ -8,6 +8,7 @@ import no.fdk.exception.NotFoundException;
 import no.fdk.model.*;
 import no.fdk.repository.AssessmentRepository;
 import no.fdk.utils.AssessmentUtils;
+import no.fdk.utils.GraphUtils;
 import no.fdk.utils.PaginationUtils;
 import org.apache.jena.graph.Graph;
 import org.springframework.data.domain.Example;
@@ -41,12 +42,15 @@ public class AssessmentService {
     public Flux<Assessment> assess(Graph graph, EntityType entityType) {
         log.info("Starting validation of data graph for entity type: {}", entityType);
 
-        return validationService.validate(graph)
-            .doOnNext(report -> log.info("Successfully created validation report for entity type: {}", entityType))
-            .flatMapMany(report -> AssessmentUtils.extractEntityResourcePairsFromGraph(graph, entityType, report))
+        return Flux.fromIterable(GraphUtils.extractRdfModels(graph, entityType.getResource()))
+            .flatMap(validationService::validate)
+            .onErrorContinue((throwable, o) -> log.error("Error while validating entity", throwable))
+            .doOnNext(result -> log.info("Successfully created validation report for entity type {} {}", entityType, result.getId()))
+            .flatMap(result -> AssessmentUtils.extractEntityResourcesWithReportEntries(result.getModel(), entityType, result.getValidationReport()))
             .delayElements(Duration.ofMillis(150))
+            .doOnNext(triple -> log.info("Creating quality assessment for entity type {} {}", entityType, triple.getLeft().getId()))
             .map(AssessmentUtils::generateAssessmentForEntity)
-            .doOnComplete(() -> log.info("Successfully created quality assessments for entity type: {}", entityType));
+            .doOnComplete(() -> log.info("Successfully created quality assessments for entity type {}", entityType));
     }
 
     public Mono<Rating> getCatalogAssessmentRating(String catalogId, String catalogUri, String entityType, Collection<Context> contexts) {
