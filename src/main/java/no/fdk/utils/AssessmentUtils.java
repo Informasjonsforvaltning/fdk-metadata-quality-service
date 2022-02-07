@@ -5,7 +5,6 @@ import lombok.NoArgsConstructor;
 import no.fdk.model.*;
 import no.fdk.rdf.FDK;
 import org.apache.commons.lang3.tuple.Triple;
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.shacl.ValidationReport;
@@ -41,6 +40,7 @@ public class AssessmentUtils {
     }
 
     public static Assessment generateAssessmentForEntity(Triple<Entity, Resource, Collection<ReportEntry>> triple) {
+        final String id = triple.getLeft().getId();
         Collection<IndicatorType> violations = triple.getRight()
             .stream()
             .map(entry -> AssessmentUtils.findViolations(entry, triple))
@@ -56,18 +56,16 @@ public class AssessmentUtils {
 
         return Assessment
             .builder()
-            .id(triple.getLeft().getId())
+            .id(id)
             .entity(triple.getLeft())
             .dimensions(dimensions)
             .rating(buildRating(indicators))
             .build();
     }
 
-    public static Flux<Triple<Entity, Resource, Collection<ReportEntry>>> extractEntityResourcePairsFromGraph(Graph graph, EntityType entityType, ValidationReport report) {
-        Model model = ModelFactory.createModelForGraph(graph);
-
+    public static Flux<Triple<Entity, Resource, Collection<ReportEntry>>> extractEntityResourcesWithReportEntries(Model model, EntityType entityType, ValidationReport report) {
         if (entityType == EntityType.DATASET) {
-            return extractDatasetEntitiesFromModel(model, report);
+            return extractDatasetEntityFromModel(model, report);
         }
 
         return Flux.empty();
@@ -214,7 +212,9 @@ public class AssessmentUtils {
         String catalogUri = null;
 
         if (datasetResource.hasProperty(DCTerms.publisher)) {
-            catalogId = extractPublisherIdFromPublisherResource(datasetResource.getPropertyResourceValue(DCTerms.publisher));
+            Resource catalogResource = datasetResource.getPropertyResourceValue(DCTerms.publisher);
+            catalogId = extractPublisherIdFromPublisherResource(catalogResource);
+            catalogUri = catalogResource != null && catalogResource.isURIResource() ? catalogResource.getURI() : null;
         }
 
         if (catalogId == null) {
@@ -235,7 +235,7 @@ public class AssessmentUtils {
             .build();
     }
 
-    private static String extractFdkIdFromResource(Resource resource) {
+    public static String extractFdkIdFromResource(Resource resource) {
         return resource
             .getModel()
             .listSubjectsWithProperty(FOAF.primaryTopic, resource)
@@ -250,9 +250,9 @@ public class AssessmentUtils {
             .orElse(null);
     }
 
-    private static Map<String, String> extractTitleFromResource(Resource resource, Property property) {
+    private static Map<String, String> extractTitleFromResource(Resource resource) {
         return resource
-            .listProperties(property)
+            .listProperties(DCTerms.title)
             .toList()
             .stream()
             .map(Statement::getLiteral)
@@ -276,9 +276,9 @@ public class AssessmentUtils {
 
         if (ratio >= 0.75) {
             return RatingCategory.excellent;
-        } else if (ratio >= 0.5 && ratio < 0.75) {
+        } else if (ratio >= 0.5) {
             return RatingCategory.good;
-        } else if (ratio >= 0.25 && ratio < 0.50) {
+        } else if (ratio >= 0.25) {
             return RatingCategory.sufficient;
         }
 
@@ -546,7 +546,7 @@ public class AssessmentUtils {
         return violations;
     }
 
-    private static Flux<Triple<Entity, Resource, Collection<ReportEntry>>> extractDatasetEntitiesFromModel(Model model, ValidationReport report) {
+    private static Flux<Triple<Entity, Resource, Collection<ReportEntry>>> extractDatasetEntityFromModel(Model model, ValidationReport report) {
         Collection<ReportEntry> entries = report.getEntries();
 
         return Flux.defer(() ->
@@ -556,7 +556,7 @@ public class AssessmentUtils {
                             .id(extractFdkIdFromResource(resource))
                             .uri(resource.getURI())
                             .type(EntityType.DATASET)
-                            .title(extractTitleFromResource(resource, DCTerms.title))
+                            .title(extractTitleFromResource(resource))
                             .catalog(extractCatalogFromModel(model, resource))
                             .contexts(extractContextsFromResource(resource))
                             .build();

@@ -26,6 +26,7 @@ public enum EntityType {
     }
 
     private final String label;
+    @Getter
     private final Resource resource;
     @Getter
     private final String graphName;

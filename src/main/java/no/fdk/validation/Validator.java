@@ -1,13 +1,13 @@
 package no.fdk.validation;
 
-import org.apache.jena.graph.Graph;
-import org.apache.jena.shacl.ValidationReport;
+import no.fdk.model.ValidationResult;
+import org.apache.jena.rdf.model.Model;
 import reactor.core.publisher.Mono;
 
 public interface Validator {
 
-    boolean supports(Graph graph);
+    boolean supports(Model model);
 
-    Mono<ValidationReport> validate(Graph graph);
+    Mono<ValidationResult> validate(Model model);
 
 }

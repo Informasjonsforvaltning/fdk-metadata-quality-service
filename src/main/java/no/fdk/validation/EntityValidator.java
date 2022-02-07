@@ -1,6 +1,7 @@
 package no.fdk.validation;
 
 import lombok.RequiredArgsConstructor;
+import no.fdk.model.ValidationResult;
 import no.fdk.rdf.MQA;
 import no.fdk.service.MediaTypeService;
 import org.apache.jena.graph.Graph;
@@ -12,7 +13,6 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.shacl.ValidationReport;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.util.ModelUtils;
 import org.apache.jena.util.ResourceUtils;
@@ -31,21 +31,22 @@ public abstract class EntityValidator implements Validator {
 
     private final MediaTypeService mediaTypeService;
 
+    private Mono<Model> shapesModel;
+
     @Override
-    public boolean supports(Graph graph) {
-        return ModelFactory
-            .createModelForGraph(graph)
+    public boolean supports(Model model) {
+        return model
             .listResourcesWithProperty(RDF.type, getResource())
             .hasNext();
     }
 
     @Override
-    public Mono<ValidationReport> validate(Graph graph) {
-        return Mono.just(ModelFactory.createModelForGraph(graph))
+    public Mono<ValidationResult> validate(Model model) {
+        return Mono.just(model)
             .zipWith(getShapesModel())
             .map(tuple -> ValidationUtil.validateModel(tuple.getT1(), tuple.getT2(), true))
             .map(Resource::getModel)
-            .map(ValidationReport::fromModel);
+            .map(validationModel -> ValidationResult.create(model, validationModel));
     }
 
     protected abstract Resource getResource();
