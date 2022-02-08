@@ -68,15 +68,16 @@ public class GraphUtils {
             model.add( statement );
             if ( node.isResource() && ((depth < maxDepth) || (maxDepth == -1)) ) {
 
-                if( rdfType == DCAT.Dataset && !statement.getSubject().hasProperty(RDF.type, DCAT.Dataset) ) {
-                    StmtIterator stmts = node.asResource().listProperties();
-                    while (stmts.hasNext()) {
-                        Statement stmt = stmts.next();
-                        rdfDFS(stmt.getObject(), stmt, model, rdfType, depth++, maxDepth);
+                StmtIterator stmts = node.asResource().listProperties();
+                while (stmts.hasNext()) {
+                    Statement stmt = stmts.next();
+                    if( rdfType == DCAT.Dataset && stmt.getObject().isResource() &&
+                            stmt.getObject().asResource().hasProperty(RDF.type, DCAT.Dataset) ) {
+                        continue;
                     }
+                    rdfDFS(stmt.getObject(), stmt, model, rdfType, depth++, maxDepth);
                 }
             }
         }
     }
-
 }
