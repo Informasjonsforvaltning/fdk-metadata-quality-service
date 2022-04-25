@@ -21,7 +21,7 @@
     </description>
 
     <properties>
-        <java.version>15</java.version>
+        <java.version>17</java.version>
         <jena.version>4.4.0</jena.version>
     </properties>
 
