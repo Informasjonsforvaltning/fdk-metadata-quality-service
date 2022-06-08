@@ -128,7 +128,7 @@ public class AssessmentService {
             .replaceWith(assessment)
             .withOptions(FindAndReplaceOptions.options().returnNew().upsert())
             .findAndReplace()
-            .doOnError(Throwable::printStackTrace)
+            .doOnError(throwable -> log.error("Failed to upsert assessment: " + throwable.getMessage()))
             .subscribe();
     }
 
