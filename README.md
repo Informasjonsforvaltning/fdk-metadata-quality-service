@@ -1,6 +1,9 @@
 # FDK metadata quality
 A service that assess metadata quality of datasets, data services and concepts against a set of predefined rules.
 
+
+## This service has been replaced by the MQA-stack, see https://github.com/Informasjonsforvaltning?q=mqa&type=all&language=&sort=
+
 ## Installation and Usage
 
 - Required tools to run this project:
